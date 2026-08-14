@@ -1,0 +1,1570 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta property="og:type" content="website" />
+<meta property="og:title" content="Kein Zugriffsrecht" />
+<meta property="og:url" content="https://ilias.studium.kit.edu" />
+<meta property="og:image" content="https://ilias.studium.kit.edu/Customizing/skin/kit/kit_light/../images/logo/Sharing.jpg" />
+<meta property="og:image:type" content="image/jpg" />
+<meta property="og:site_title" content="ilias.studium.kit.edu" />
+
+
+	
+
+	<title>Lokale ILIAS-Anmeldung: KIT-ILIAS</title>
+	<link rel="icon" href="./Customizing/skin/kit/kit_light/../images/logo/favicon.ico" type="image/x-icon">
+
+	<!-- This is the safest place for now to initialize our global namespace which is -->
+	<!-- used by several scripts included on the way to expose their business logic.  -->
+	<script type="application/javascript">var il = il ||{}; window.il = il;</script>
+
+	<style>
+		
+	</style>
+
+	
+	<link rel="stylesheet" type="text/css" href="https://ilias.studium.kit.edu/deliver.php/HczLCgIxDIXhd8la7C0k7TDMk3TTaVM33rBFEPHdjW5--OBw3nCHBca8PcpJsunj6bPh1DRBXUvRSEeqFKn6JJ4Th0addeeyaWUWOMD1f_I6y7GOob5MWBwz2Yjo6bOu2-Y4EiNGa3_avQssu3wB/-/style.css" />
+	
+	<link rel="stylesheet" type="text/css" href="./components/ILIAS/COPage/css/syntaxhighlight.css?_v=10_10" />
+	
+	<link rel="stylesheet" type="text/css" href="assets/css/tagify.css?_v=10_10" />
+	
+	<link rel="stylesheet" type="text/css" href="./Customizing/skin/kit/kit_light/kit_light.css?_v=10_10" />
+	
+	<link rel="stylesheet" type="text/css" href="assets/css/delos_cont.css?_v=10_10" />
+	
+	<link rel="stylesheet" type="text/css" href="./node_modules/jstree/dist/themes/default/style.min.css?_v=10_10" />
+	
+</head>
+<body>
+	
+
+	<div class="il-page-overlay">
+		<div class="il-toast-container" aria-live="polite" ></div>
+	</div>
+
+	<div class="il-layout-page" >
+		<header>
+			<div class="header-inner">
+				<div class="il-logo">
+					<span class="hidden-xs">
+<a href="https://ilias.studium.kit.edu/goto.php/root/1">
+
+
+
+<img src="./Customizing/skin/kit/kit_light/../images/logo/HeaderIcon.svg" class="img-standard" alt="Logo ILIAS - zur Einstiegsseite" />
+
+
+
+
+
+</a>
+</span>
+					<span class="visible-xs-block">
+<a href="https://ilias.studium.kit.edu/goto.php/root/1">
+
+
+
+<img src="./Customizing/skin/kit/kit_light/../images/logo/HeaderIconResponsive.svg" class="img-standard" alt="Logo ILIAS - zur Einstiegsseite" />
+
+
+
+
+
+</a>
+</span>
+					<div class="il-pagetitle">
+						ILIAS Lernplattform
+					</div>
+				</div>
+
+				
+				<ul class="il-maincontrols-metabar" role="menubar" style="visibility: hidden" aria-label="Metaleiste" id="il_ui_fw_6a7f1c91329a59_89514470" ><!--if done via class/css-files, visibility is being applied too late -->
+	
+	<li role="none">
+		<a class="il-link link-bulky" href="https://ilias.studium.kit.edu" id="il_ui_fw_6a7f1c9131d340_44399574"><span class="glyph"  role="img">
+<span class="glyphicon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ glyphicon-question-sign
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+" aria-hidden="true"></span>
+
+
+
+
+
+
+
+</span>
+<span class="bulky-label">Hilfe</span></a>
+		
+	</li>
+	
+	<li role="none">
+		<button class="btn btn-bulky" id="il_ui_fw_6a7f1c9131f216_05852351"  role="menuitem"  aria-haspopup="true"    ><span class="glyph"  role="img">
+<span class="glyphicon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ glyphicon-lang
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+" aria-hidden="true"></span>
+
+
+
+
+
+
+
+</span>
+<span class="bulky-label">Sprache</span></button>
+
+		
+		<div class="il-metabar-slates">
+			<div class="il-maincontrols-slate disengaged" id="il_ui_fw_6a7f1c91326254_26336825">
+	<div class="il-maincontrols-slate-content" data-replace-marker="content">
+		
+		<ul>
+			
+			<li><a lang="de" hreflang="de" class="il-link link-bulky" href="https://ilias.studium.kit.edu/login.php?client_id=produktiv&cmd=force_login&lang=de">
+<img
+ class="icon none small"
+ src="data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCINCgkgdmlld0JveD0iMCAwIDMyMCAzMjAiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMyMCAzMjA7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+DQoJLnN0MHtjbGlwLXBhdGg6dXJsKCNTVkdJRF8wMDAwMDA0Nzc1MTgzNzAxNzcyMjkwMzQ5MDAwMDAwOTM5MjQyNjM5Mzc4Mzc4Mzg1N18pO2ZpbGw6IzAwODc2Yzt9DQo8L3N0eWxlPg0KPGc+DQoJPGc+DQoJCTxkZWZzPg0KCQkJPHJlY3QgaWQ9IlNWR0lEXzFfIiB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIvPg0KCQk8L2RlZnM+DQoJCTxjbGlwUGF0aCBpZD0iU1ZHSURfMDAwMDAxNjU5Mjc3Njk0MzI5ODM0MDA2OTAwMDAwMTQyOTU5NjQxMjMxNjc4OTQ5MjBfIj4NCgkJCTx1c2UgeGxpbms6aHJlZj0iI1NWR0lEXzFfIiAgc3R5bGU9Im92ZXJmbG93OnZpc2libGU7Ii8+DQoJCTwvY2xpcFBhdGg+DQoJCTxwYXRoIHN0eWxlPSJjbGlwLXBhdGg6dXJsKCNTVkdJRF8wMDAwMDE2NTkyNzc2OTQzMjk4MzQwMDY5MDAwMDAxNDI5NTk2NDEyMzE2Nzg5NDkyMF8pO2ZpbGw6IzAwODc2YzsiIGQ9Ik05MCw1MEg2MA0KCQkJYy01LjUsMC0xMCw0LjUtMTAsMTB2MjAwYzAsNS41LDQuNSwxMCwxMCwxMGgzMHYtMTVINjVWNjVoMjVWNTB6IE0yNzAsMjYwVjYwYzAtNS41LTQuNS0xMC0xMC0xMGgtMzB2MTVoMjV2MTkwaC0yNXYxNWgzMA0KCQkJQzI2NS41LDI3MCwyNzAsMjY1LjUsMjcwLDI2MCIvPg0KCTwvZz4NCjwvZz4NCjx0ZXh0CiAgIHN0eWxlPSIKICAgICAgZm9udC1zdHlsZTpub3JtYWw7CiAgICAgIGZvbnQtd2VpZ2h0Om5vcm1hbDsKICAgICAgZm9udC1zaXplOjhyZW07CiAgICAgIGZvbnQtZmFtaWx5OnNhbnMtc2VyaWY7CiAgICAgIGxldHRlci1zcGFjaW5nOjBweDsKICAgICAgZmlsbDojMDAwOwogICAgICBmaWxsLW9wYWNpdHk6MTsKICAgICIKICAgIHg9IjUwJSIKICAgIHk9IjU1JSIKICAgIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiCiAgICB0ZXh0LWFuY2hvcj0ibWlkZGxlIgogID5kZTwvdGV4dD48L3N2Zz4=" alt=""
+
+ data-abbreviation="de"
+/>
+<span class="bulky-label">Deutsch</span></a></li>
+			
+			<li><a lang="en" hreflang="en" class="il-link link-bulky" href="https://ilias.studium.kit.edu/login.php?client_id=produktiv&cmd=force_login&lang=en">
+<img
+ class="icon none small"
+ src="data:image/svg+xml;base64,PHN2ZyB2ZXJzaW9uPSIxLjEiIGlkPSJMYXllcl8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCINCgkgdmlld0JveD0iMCAwIDMyMCAzMjAiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMyMCAzMjA7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxzdHlsZSB0eXBlPSJ0ZXh0L2NzcyI+DQoJLnN0MHtjbGlwLXBhdGg6dXJsKCNTVkdJRF8wMDAwMDA0Nzc1MTgzNzAxNzcyMjkwMzQ5MDAwMDAwOTM5MjQyNjM5Mzc4Mzc4Mzg1N18pO2ZpbGw6IzAwODc2Yzt9DQo8L3N0eWxlPg0KPGc+DQoJPGc+DQoJCTxkZWZzPg0KCQkJPHJlY3QgaWQ9IlNWR0lEXzFfIiB3aWR0aD0iMzIwIiBoZWlnaHQ9IjMyMCIvPg0KCQk8L2RlZnM+DQoJCTxjbGlwUGF0aCBpZD0iU1ZHSURfMDAwMDAxNjU5Mjc3Njk0MzI5ODM0MDA2OTAwMDAwMTQyOTU5NjQxMjMxNjc4OTQ5MjBfIj4NCgkJCTx1c2UgeGxpbms6aHJlZj0iI1NWR0lEXzFfIiAgc3R5bGU9Im92ZXJmbG93OnZpc2libGU7Ii8+DQoJCTwvY2xpcFBhdGg+DQoJCTxwYXRoIHN0eWxlPSJjbGlwLXBhdGg6dXJsKCNTVkdJRF8wMDAwMDE2NTkyNzc2OTQzMjk4MzQwMDY5MDAwMDAxNDI5NTk2NDEyMzE2Nzg5NDkyMF8pO2ZpbGw6IzAwODc2YzsiIGQ9Ik05MCw1MEg2MA0KCQkJYy01LjUsMC0xMCw0LjUtMTAsMTB2MjAwYzAsNS41LDQuNSwxMCwxMCwxMGgzMHYtMTVINjVWNjVoMjVWNTB6IE0yNzAsMjYwVjYwYzAtNS41LTQuNS0xMC0xMC0xMGgtMzB2MTVoMjV2MTkwaC0yNXYxNWgzMA0KCQkJQzI2NS41LDI3MCwyNzAsMjY1LjUsMjcwLDI2MCIvPg0KCTwvZz4NCjwvZz4NCjx0ZXh0CiAgIHN0eWxlPSIKICAgICAgZm9udC1zdHlsZTpub3JtYWw7CiAgICAgIGZvbnQtd2VpZ2h0Om5vcm1hbDsKICAgICAgZm9udC1zaXplOjhyZW07CiAgICAgIGZvbnQtZmFtaWx5OnNhbnMtc2VyaWY7CiAgICAgIGxldHRlci1zcGFjaW5nOjBweDsKICAgICAgZmlsbDojMDAwOwogICAgICBmaWxsLW9wYWNpdHk6MTsKICAgICIKICAgIHg9IjUwJSIKICAgIHk9IjU1JSIKICAgIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiCiAgICB0ZXh0LWFuY2hvcj0ibWlkZGxlIgogID5lbjwvdGV4dD48L3N2Zz4=" alt=""
+
+ data-abbreviation="en"
+/>
+<span class="bulky-label">English</span></a></li>
+			
+		</ul>
+		
+		
+	</div>
+</div>
+
+		</div>
+		
+	</li>
+	
+	<li role="none">
+		<button class="btn btn-bulky" id="il_ui_fw_6a7f1c91329016_75863937"  role="menuitem"  aria-haspopup="true"    ><span class="glyph"  role="img">
+<span class="glyphicon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ glyphicon-option-vertical
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+" aria-hidden="true"></span>
+
+
+<span class="il-counter">
+	
+	<span class="badge badge-notify il-counter-status" style="display:none">0</span>
+	
+	
+</span>
+
+
+
+<span class="il-counter">
+	
+	
+	<span class="badge badge-notify il-counter-novelty" style="display:none">0</span>
+	
+</span>
+
+
+
+
+</span>
+<span class="bulky-label">Mehr zeigen</span></button>
+
+		
+		<div class="il-metabar-slates">
+			<div class="il-maincontrols-slate disengaged" id="il_ui_fw_6a7f1c91329787_66078018" role="menu">
+	<div class="il-maincontrols-slate-content" data-replace-marker="content">
+		
+		
+	</div>
+</div>
+
+		</div>
+		
+	</li>
+	
+</ul>
+
+			</div>
+		</header>
+
+		<div class="il-system-infos">
+			
+		</div>
+
+		<div class="nav il-maincontrols">
+			<div class="il-maincontrols-mainbar" id="il_ui_fw_6a7f1c91333b33_54116787">
+	<nav class="il-mainbar" aria-label="Hauptnavigationsleiste">
+		
+		<div class="il-mainbar-tools-button">
+			<button class="btn btn-bulky engaged" id="il_ui_fw_6a7f1c913323c3_90068690"     aria-pressed="true"  >
+<img
+ class="icon custom small"
+ src="./Customizing/skin/kit/kit_light/../images/standard/icon_tool.svg" alt=""
+
+
+/>
+<span class="bulky-label">Tools</span></button>
+
+		</div>
+		
+
+		<div class="il-mainbar-triggers">
+			<ul class="il-mainbar-entries" role="menubar" style="visibility: hidden"><!--if done via class/css-files, visibility is being applied too late -->
+				
+				<li role="none"><button class="btn btn-bulky" id="il_ui_fw_6a7f1c9132b944_81465090"  role="menuitem"     >
+<img
+ class="icon rep small"
+ src="./Customizing/skin/kit/kit_light/../images/standard/icon_rep.svg" alt=""
+
+
+/>
+<span class="bulky-label">Magazin</span></button>
+</li>
+				
+				<li role="none"><button class="btn btn-bulky" id="il_ui_fw_6a7f1c9132faf0_71855621"  role="menuitem"     ><span class="glyph"  role="img">
+<span class="glyphicon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ glyphicon-option-horizontal
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+" aria-hidden="true"></span>
+
+
+
+
+
+
+
+</span>
+<span class="bulky-label">Mehr</span></button>
+</li>
+				
+			</ul>
+		</div>
+	</nav>
+
+	<div class="il-mainbar-slates">
+		<div class="il-mainbar-tools-entries">
+			<ul class="il-mainbar-tools-entries-bg" role="menubar">
+				
+				<li class="il-mainbar-tool-trigger-item" role="none"><button class="btn btn-bulky" id="il_ui_fw_6a7f1c91330f09_59606981"  role="menuitem"     >
+<img
+ class="icon hlps small"
+ src="./Customizing/skin/kit/kit_light/../images/standard/icon_hlps.svg" alt=""
+
+
+/>
+<span class="bulky-label">Hilfe</span></button>
+</li>
+				
+			</ul>
+			
+		</div>
+		
+		<div class="il-maincontrols-slate disengaged" id="il_ui_fw_6a7f1c9132e5e1_67916394" data-depth-level="1" role="menu">
+	<div class="il-maincontrols-slate-content" data-replace-marker="content">
+		
+		<ul>
+			
+			<li><a class="il-link link-bulky" href="https://ilias.studium.kit.edu/goto.php/root/1">
+<img
+ class="icon root small"
+ src="./Customizing/skin/kit/kit_light/../images/standard/icon_root.svg" alt=""
+
+
+/>
+<span class="bulky-label">Magazin - Einstiegsseite</span></a></li>
+			
+			<li><button class="btn btn-bulky" id="il_ui_fw_6a7f1c9132d940_44049006"      >
+<img
+ class="icon custom small"
+ src="./Customizing/skin/kit/kit_light/../images/standard/icon_reptr.svg" alt=""
+
+
+/>
+<span class="bulky-label">Baumansicht</span></button>
+<div class="il-maincontrols-slate disengaged" id="il_ui_fw_6a7f1c9132e298_74967040" data-depth-level="2">
+	<div class="il-maincontrols-slate-content" data-replace-marker="content">
+		
+		
+		...
+		
+	</div>
+</div>
+</li>
+			
+		</ul>
+		
+		
+	</div>
+</div>
+
+		
+		<div class="il-maincontrols-slate disengaged" id="il_ui_fw_6a7f1c913301b6_63026627" data-depth-level="1" role="menu">
+	<div class="il-maincontrols-slate-content" data-replace-marker="content">
+		
+		
+	</div>
+</div>
+
+		
+		<div class="il-maincontrols-slate disengaged" id="il_ui_fw_6a7f1c913317d2_59819184" data-depth-level="1">
+	<div class="il-maincontrols-slate-content" data-replace-marker="content">
+		
+		
+		<div id='ilHelpPanel'>&nbsp;</div>
+		
+	</div>
+</div>
+
+		
+
+		<div class="il-mainbar-close-slates">
+			<button class="btn btn-bulky" id="il_ui_fw_6a7f1c91333858_88543375"      ><span class="glyph"  role="img">
+<span class="glyphicon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ glyphicon-triangle-left
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+" aria-hidden="true"></span>
+
+
+
+
+
+
+
+</span>
+<span class="bulky-label">Schließen</span></button>
+
+		</div>
+
+	</div>
+
+</div>
+
+		</div>
+
+		<!-- html5 main-tag is not supported in IE / div is needed -->
+		<main class="il-layout-page-content">
+			
+
+			
+
+
+<div id="mainspacekeeper" class="container-fluid ">
+	<div class="row" style="position: relative;">
+		
+		<div id="fixed_content" class=" ilContentFixed" >
+			<div id="mainscrolldiv" >
+				
+
+				
+
+				
+				
+
+				
+
+				<div class="ilClearFloat"></div>
+
+				
+				<div class="ilTabsContentOuter"><div class="clearfix"></div>
+				
+				<div class="il_after_tabs_spacing"></div>
+				
+				
+				
+				
+				
+
+					<div>
+						
+					</div>
+
+
+					<div id="ilContentContainer">
+						<div class="row">
+
+							<div id="il_center_col" class="col-sm-12">
+								
+								
+								<div class="ilMessageBox">
+	
+	
+</div>
+
+
+
+<style>
+#div_login_method {
+  text-align: center;
+}
+#div_login_method h1 {
+  font-weight: bold;
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+#div_login_buttons {
+  display:flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 24px 0;
+}
+#div_ilias_login {
+  max-width: 820px;
+  margin: 0 auto;
+}
+.button_login {
+  position: relative;
+  display: block;
+  width: 340px;
+  box-sizing: border-box;
+  box-shadow: 0 2px 5px #0009;
+  text-align: left;
+  padding: 10px 16px 10px 110px;
+  font-size: 13px;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  transition: transform .3s;
+}
+.button_login:enabled:hover {
+  transform: scale(1.1);
+}
+.button_login h3 {
+  font-weight: bold;
+  margin-top: 12px;
+}
+.button_login img {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  height: 80px;
+  filter: grayscale(1) brightness(8);
+}
+#button_shib_login {
+  background-color: #00987c;
+  background: linear-gradient(240deg, #00987cff, #00987ccc);
+}
+#button_ilias_login {
+  background-color: #4664aa;
+  background: linear-gradient(240deg, #4664aaff, #4664aacc);
+}
+html[lang=de] *[lang=en],
+html[lang=en] *[lang=de] {
+  display: none;
+}
+</style>
+
+
+
+<div>
+	
+</div>
+
+<noscript>
+  <div style="color:red; font-weight:bold; font-size:120%">Bitte aktivieren Sie JavaScript in den Einstellungen Ihres Browsers! / Please enable JavaScript in the settings of your browser!</div>
+</noscript>
+
+<div style="margin-bottom:16px;">
+  <h1 class="il-page-content-header" lang="de">Anmelden</h1>
+  <h1 class="il-page-content-header" lang="en">Login</h1>
+</div>
+<div lang="de">
+  <img src="/Customizing/skin/kit/images/kit_welcometoilias_de.jpg" style="width:100%; max-width:1920px;" alt="Willkommen auf der Lernplattform ILIAS des KIT"/>
+</div>
+<div lang="en">
+  <img src="/Customizing/skin/kit/images/kit_welcometoilias_en.jpg" style="width:100%; max-width:1920px;" alt="Welcome to the Learning Platform ILIAS at KIT"/>
+</div>
+
+<div class="ilStartupSection" style="margin-top:0">
+	<div id="div_login_method">
+    <div id="div_login" class="choose_login">
+      <h2 lang="de">Bitte wählen Sie die Methode aus mit der Sie sich anmelden möchten:</h2>
+      <h2 lang="en">Please select the method you would like to use to log in:</h2>
+      <div id="div_login_buttons">
+        <button class="button_login" id="button_shib_login" type="button">
+          <img src="/Customizing/skin/kit/images/standard/icon_rep.svg"/>
+          <h3 lang="de">KIT-Konto</h3>
+          <h3 lang="en">KIT account</h3>
+          <p lang="de">Melden Sie sich mit Ihrem KIT-Konto (xy1234 oder uxxxx) über den Shibboleth Identity Provider an.</p>
+          <p lang="en">Log in with yout KIT account (xy1234 or uxxxx) via the Shibboleth Identity Provider.</p>
+        </button>
+        <button class="button_login" id="button_ilias_login" type="button">
+          <img src="/Customizing/skin/kit/images/standard/icon_role.svg"/>
+          <h3 lang="de">Lokales Gast-Konto</h3>
+          <h3 lang="en">Local guest account</h3>
+          <p lang="de">Melden Sie sich mit Ihrem lokalen ILIAS-Gast-Konto an, wenn Sie kein KIT-Konto haben.</p>
+          <p lang="en">Log in with your local ILIAS guest account if you do not have a KIT account.</p>
+        </button>
+      </div>
+      <p lang="de">Bitte wenden Sie sich bei Fragen oder Probleme <strong>mit Ihrem KIT-Account</strong> an den <a href="https://www.scc.kit.edu/dienste/servicedesk.php" target="_blank">SCC-ServiceDesk</a>.</p>
+      <p lang="en">If you have any questions or problems <strong>with your KIT account</strong>, please contact the <a href="https://www.scc.kit.edu/dienste/servicedesk.php" target="_blank">SCC ServiceDesk</a>.</p>
+    </div>
+  </div>
+	
+	<div id="div_ilias_login" class="ilias_login hidden">
+		<button id="button_choose" class="btn btn-default" type="button">
+      <span lang="de">Zurück</span>
+      <span lang="en">Back</span>
+    </button>
+		<form class="c-form c-form--horizontal" enctype="multipart/form-data" name="login_form" action="ilias.php?baseClass=ilstartupgui&cmd=post&fallbackCmd=doStandardAuthentication&lang=de&client_id=produktiv" method="post">
+	<div class="c-form__header">
+		<div class="c-form__actions"><button class="btn btn-default"  data-action="">Anmelden</button>
+</div>
+		
+		<div class="c-form__required">
+			<span class="asterisk">*</span><span class="small"> Erforderliche Angabe</span>
+		</div>
+		
+	</div>
+	
+	<fieldset class="c-input" data-il-ui-component="section-field-input" data-il-ui-input-name="login_form/input_3" tabindex="0">
+
+	<label ><h2>Bei ILIAS anmelden</h2>
+<span class="asterisk" aria-label="Erforderliche Angabe">*</span></label>
+
+	<div class="c-input__field">
+		<fieldset class="c-input" data-il-ui-component="text-field-input" data-il-ui-input-name="login_form/input_3/input_4">
+
+	<label  for="il_ui_fw_6a7f1c911b6a51_76159972">Anmeldename<span class="asterisk" aria-label="Erforderliche Angabe">*</span></label>
+
+	<div class="c-input__field">
+		<input id="il_ui_fw_6a7f1c911b6a51_76159972" type="text" name="login_form/input_3/input_4" class="c-field-text" />
+
+	</div>
+
+	
+
+	
+
+</fieldset><fieldset class="c-input" data-il-ui-component="password-field-input" data-il-ui-input-name="login_form/input_3/input_5" id="il_ui_fw_6a7f1c911be980_91691097">
+
+	<label  for="il_ui_fw_6a7f1c911be425_82978290">Passwort<span class="asterisk" aria-label="Erforderliche Angabe">*</span></label>
+
+	<div class="c-input__field">
+		<div class="c-field-password">
+	<input id="il_ui_fw_6a7f1c911be425_82978290" type="password" name="login_form/input_3/input_5" autocomplete="off" />
+	
+	<span class="c-field-password__revelation-glyph c-field-password__revelation-glyph--reveal">
+		<a tabindex="0" class="glyph" href="#" aria-label="Offenes Auge - Anklicken, um den Inhalt der Eingabe zu sehen" id="il_ui_fw_6a7f1c911b8f94_30760777">
+<span class="glyphicon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ glyphicon-eye-open
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+" aria-hidden="true"></span>
+
+
+
+
+
+
+
+</a>
+
+	</span>
+	<span class="c-field-password__revelation-glyph c-field-password__revelation-glyph--mask">
+		<a tabindex="0" class="glyph" href="#" aria-label="Geschlossenes Auge - Anklicken, um den Inhalt des Eingabefelds zu verbergen" id="il_ui_fw_6a7f1c911bd794_26214146">
+<span class="glyphicon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ glyphicon-eye-close
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+" aria-hidden="true"></span>
+
+
+
+
+
+
+
+</a>
+
+	</span>
+	
+</div>
+
+	</div>
+
+	
+
+	
+
+</fieldset>
+	</div>
+
+	
+
+	
+
+</fieldset>
+	<div class="c-form__footer">
+		
+		<div class="c-form__required">
+			<span class="asterisk">*</span><span class="small"> Erforderliche Angabe</span>
+		</div>
+		
+		<div class="c-form__actions"><button class="btn btn-default"  data-action="">Anmelden</button>
+</div>
+	</div>
+</form>
+
+	</div>
+	
+	
+	<p class="ilStartupSection">
+		<div class="ilias_login hidden"><ul class="ilStartupSectionRegistrationLinks">
+    
+    <li><a class="il_ContainerItemCommand" href="ilias.php?baseClass=ilstartupgui&cmdNode=10d:32&cmdClass=ilAccountRegistrationGUI&lang=de&client_id=produktiv">Neues ILIAS-Konto registrieren</a></li>
+    
+    
+    <li><a class="il_ContainerItemCommand" href="./index.php?client_id=produktiv&lang=de">Zur Startseite</a></li>
+    
+    
+    <li><a class="il_ContainerItemCommand" href="ilias.php?baseClass=ilstartupgui&cmdNode=10d:wb&cmdClass=ilPasswordAssistanceGUI&lang=de&client_id=produktiv">Passwort vergessen?</a></li>
+    <li><a class="il_ContainerItemCommand" href="ilias.php?baseClass=ilstartupgui&cmdNode=10d:wb&cmdClass=ilPasswordAssistanceGUI&cmd=showUsernameAssistanceForm&lang=de&client_id=produktiv">Anmeldenamen vergessen?</a></li>
+    
+    
+</ul></div>
+	</p>
+	
+	
+	<p>
+		<a class="il_ContainerItemCommand" href="ilias.php?baseClass=ilstartupgui&cmd=showLegalDocuments&lang=de&client_id=produktiv&id=tos">Nutzungsvereinbarung</a>
+
+	</p>
+	
+</div>
+<script>
+<!--
+if (document.formlogin && document.formlogin.username && document.formlogin.password) {
+	if(document.formlogin.username.value!="") document.formlogin.password.focus();
+	else document.formlogin.username.focus();
+}
+function toggleLocalIliasLoginForm(visible) {
+  if(visible) {
+    document.querySelector('.choose_login').classList.add('hidden');
+    document.querySelectorAll('.ilias_login').forEach(i => i.classList.remove('hidden'));
+  }
+  else {
+    document.querySelector('.choose_login').classList.remove('hidden');
+    document.querySelectorAll('.ilias_login').forEach(i => i.classList.add('hidden'));
+  }
+}
+document.getElementById('button_shib_login').addEventListener('click', function() {
+  let target = location.search.match(/[?&]target=([^&]*)/);
+  location.href = 'shib_login.php' + (target ? '?target=' + target[1] : '');
+});
+document.getElementById('button_ilias_login').addEventListener('click', function() {
+  toggleLocalIliasLoginForm(true);
+  sessionStorage.setItem('login_method', 'ilias');
+});
+document.getElementById('button_choose').addEventListener('click', function() {
+  toggleLocalIliasLoginForm(false);
+  sessionStorage.removeItem('login_method');
+});
+if(sessionStorage.getItem('login_method') == 'ilias') {
+  toggleLocalIliasLoginForm(true);
+}
+//-->
+</script>
+								
+								
+								
+								
+							</div>
+
+							
+
+							
+						</div>
+					</div>
+
+					
+					
+				
+				</div>
+
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+
+
+
+			<footer class="c-maincontrols c-maincontrols__footer">
+	
+	<section class="c-maincontrols__footer-grid c-maincontrols__footer-grid--md" data-section="permanent-link" aria-label="Footer Permanent Link" tabindex="0">
+		
+		<div class="c-maincontrols__footer-grid__item text-left">
+			
+
+			<div class="c-tooltip__container c-tooltip--top" aria-live="polite">
+    <button class="btn btn-default"  data-action="" id="il_ui_fw_6a7f1c91337030_06472019">Link in Zwischenablage kopieren</button>
+
+    <div class="c-tooltip c-tooltip--hidden" role="tooltip">
+        Link zu dieser Seite wurde in die Zwischenablage kopiert.
+    </div>
+</div>
+
+		</div>
+		
+
+		
+	</section>
+	
+	<section class="c-maincontrols__footer-grid c-maincontrols__footer-grid--sm" data-section="link-groups" aria-label="Footer Link-Gruppen" tabindex="0">
+		
+		<div class="c-maincontrols__footer-grid__item text-left">
+			
+			<strong>Rechtliche Informationen</strong>
+			
+
+			<ul>
+	
+	<li><a href="https://ilias.studium.kit.edu/goto.php/impr/0">Impressum und Datenschutz</a></li>
+	
+</ul>
+		</div>
+		
+
+		
+	</section>
+	
+	<section class="c-maincontrols__footer-grid c-maincontrols__footer-grid--md" data-section="texts" aria-label="Footer Texte" tabindex="0">
+		
+		<div class="c-maincontrols__footer-grid__item text-left">
+			
+
+			powered by ILIAS (v10.10 2026-08-11)
+		</div>
+		
+
+		
+	</section>
+	
+</footer>
+
+		</main>
+	</div>
+
+
+<script src="assets/js/jquery.js?_v=10_10"></script>
+
+<script src="assets/js/core.js?_v=10_10"></script>
+
+<script src="assets/js/button.js?_v=10_10"></script>
+
+<script src="./assets/js/moment-with-locales.min.js?_v=10_10"></script>
+
+<script src="assets/js/tagify.js?_v=10_10"></script>
+
+<script src="assets/js/tagInput.js?_v=10_10"></script>
+
+<script src="assets/js/dropzone.min.js?_v=10_10"></script>
+
+<script src="assets/js/dropzone.js?_v=10_10"></script>
+
+<script src="assets/js/input.js?_v=10_10"></script>
+
+<script src="assets/js/file.js?_v=10_10"></script>
+
+<script src="assets/js/input.factory.min.js?_v=10_10"></script>
+
+<script src="assets/js/Basic.js?_v=10_10"></script>
+
+<script src="assets/js/GS.js?_v=10_10"></script>
+
+<script src="assets/js/stdpage.js?_v=10_10"></script>
+
+<script src="assets/js/toast.js?_v=10_10"></script>
+
+<script src="assets/js/mainbar.js?_v=10_10"></script>
+
+<script src="assets/js/maincontrols.min.js?_v=10_10"></script>
+
+<script src="assets/js/system_info.js?_v=10_10"></script>
+
+<script src="assets/js/footer.min.js?_v=10_10"></script>
+
+<script src="assets/js/counter.js?_v=10_10"></script>
+
+<script src="assets/js/image.min.js?_v=10_10"></script>
+
+<script src="assets/js/modal-confirmation.js?_v=10_10"></script>
+
+<script src="assets/js/repository.js?_v=10_10"></script>
+
+<script src="assets/js/Explorer2.js?_v=10_10"></script>
+
+<script src="./node_modules/jstree/dist/jstree.js?_v=10_10"></script>
+
+<script src="assets/js/SearchMainMenu.js?_v=10_10"></script>
+
+<script src="assets/js/ilHelp.js?_v=10_10"></script>
+
+<script src="assets/js/accordion.js?_v=10_10"></script>
+
+<script src="components/ILIAS/COPage/js/ilCOPagePres.js?_v=10_10"></script>
+
+<script src="assets/js/legacyAutocomplete.js?_v=10_10"></script>
+
+
+
+<script>
+	
+		il.Util.addOnLoad(function() {
+			try { $('#il_ui_fw_6a7f1c911b8f94_30760777').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c911b8222_45559960',
+							{
+								'id' : 'il_signal_6a7f1c911b8222_45559960', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('[]')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try { $('#il_ui_fw_6a7f1c911bd794_26214146').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c911b8257_54123440',
+							{
+								'id' : 'il_signal_6a7f1c911b8257_54123440', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('[]')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try { $(document).on('il_signal_6a7f1c911b8222_45559960', function() {
+                        const fieldContainer = document.querySelector('#il_ui_fw_6a7f1c911be980_91691097 .c-input__field .c-field-password');
+                        fieldContainer.classList.add('revealed');
+                        fieldContainer.getElementsByTagName('input').item(0).type='text';
+                    });$(document).on('il_signal_6a7f1c911b8257_54123440', function() {
+                        const fieldContainer = document.querySelector('#il_ui_fw_6a7f1c911be980_91691097 .c-input__field .c-field-password');
+                        fieldContainer.classList.remove('revealed');
+                        fieldContainer.getElementsByTagName('input').item(0).type='password';
+                    }); } catch (e) { console.log(e); }
+try {  } catch (e) { console.log(e); }
+try { il.GS.Client.init('{"hashing":true,"logging":false}'); } catch (e) { console.log(e); }
+try { il.repository.ui.init();
+il.repository.core.init('https://ilias.studium.kit.edu') } catch (e) { console.log(e); }
+try { il.Help.setAjaxUrl('ilias.php?baseClass=ilhelpgui&help_screen_id=start_up/force_login.0&cmdMode=asynch'); } catch (e) { console.log(e); }
+try { il.Help.listHelp(null); } catch (e) { console.log(e); }
+try {  } catch (e) { console.log(e); }
+try { $('#il_ui_fw_6a7f1c9131d340_44399574').on('click', function() {
+                                    $('body').trigger('il-help-toggle-slate');
+                                    return false;
+                                }) } catch (e) { console.log(e); }
+try { $('#il_ui_fw_6a7f1c9131f216_05852351').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c912ccbb0_29838596',
+							{
+								'id' : 'il_signal_6a7f1c912ccbb0_29838596', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('[]')
+							}
+						);
+						return false;
+					});$('#il_ui_fw_6a7f1c9131f216_05852351').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c912cd4c2_97104265',
+							{
+								'id' : 'il_signal_6a7f1c912cd4c2_97104265', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('[]')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try { $(document).on('il_signal_6a7f1c912cd4c2_97104265', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('toggle', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c91326254_26336825'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c912cd4e3_39224980', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('engage', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c91326254_26336825'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c912cd4f5_42854996', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('replace', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c91326254_26336825'
+                    ); 
+                    return false;}); } catch (e) { console.log(e); }
+try { $('#il_ui_fw_6a7f1c91329016_75863937').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c912ccbb0_29838596',
+							{
+								'id' : 'il_signal_6a7f1c912ccbb0_29838596', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('[]')
+							}
+						);
+						return false;
+					});$('#il_ui_fw_6a7f1c91329016_75863937').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c9131ac60_44085934',
+							{
+								'id' : 'il_signal_6a7f1c9131ac60_44085934', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('[]')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try { $(document).on('il_signal_6a7f1c9131ac60_44085934', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('toggle', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c91329787_66078018'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c9131acc4_87914894', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('engage', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c91329787_66078018'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c9131ace5_29506969', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('replace', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c91329787_66078018'
+                    ); 
+                    return false;}); } catch (e) { console.log(e); }
+try { 
+					il.UI.maincontrols.metabar.init('il_ui_fw_6a7f1c91329a59_89514470');
+                    il.UI.maincontrols.metabar.get('il_ui_fw_6a7f1c91329a59_89514470').registerSignals(
+						'il_signal_6a7f1c912ccbb0_29838596',
+						'il_signal_6a7f1c912ccbf9_87310228',
+					);
+                    il.UI.maincontrols.metabar.get('il_ui_fw_6a7f1c91329a59_89514470').init();
+                    window.addEventListener(
+                        'resize',
+                        ()=>{il.UI.maincontrols.metabar.get('il_ui_fw_6a7f1c91329a59_89514470').init()}
+                    );
+				 } catch (e) { console.log(e); }
+try { 
+                        il.UI.maincontrols.mainbar.addPartIdAndEntry('0:0', 'triggerer', 'il_ui_fw_6a7f1c9132b944_81465090', false);
+                        il.UI.maincontrols.mainbar.addMapping('494c4941535c4d61696e4d656e755c50726f76696465725c5374616e64617264546f704974656d7350726f76696465727c7265706f7369746f7279','0:0');
+                    
+$('#il_ui_fw_6a7f1c9132b944_81465090').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c9132ab56_34781032',
+							{
+								'id' : 'il_signal_6a7f1c9132ab56_34781032', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('{"entry_id":"0:0","action":"trigger"}')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try { 
+                                    il.UI.maincontrols.mainbar.addTriggerSignal('il_signal_6a7f1c9132be04_29970681');
+                                    il.UI.maincontrols.mainbar.addPartIdAndEntry('0:0:1', 'triggerer', 'il_ui_fw_6a7f1c9132d940_44049006');
+                                
+$('#il_ui_fw_6a7f1c9132d940_44049006').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c9132be04_29970681',
+							{
+								'id' : 'il_signal_6a7f1c9132be04_29970681', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('{"entry_id":"0:0:1","action":"trigger"}')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try {  } catch (e) { console.log(e); }
+try { $(document).on('il_signal_6a7f1c912d77c8_32960084', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('toggle', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c9132e298_74967040'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c912d77e8_55529049', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('engage', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c9132e298_74967040'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c912d77f8_14842952', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('replace', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c9132e298_74967040'
+                    ); 
+                    return false;});il.UI.maincontrols.mainbar.addPartIdAndEntry('0:0:1', 'slate', 'il_ui_fw_6a7f1c9132e298_74967040');
+$('#il_ui_fw_6a7f1c9132e298_74967040').on('in_view', function(event) {
+						$(this).trigger('il_signal_6a7f1c912d77f8_14842952',
+							{
+								'id' : 'il_signal_6a7f1c912d77f8_14842952', 'event' : 'in_view',
+								'triggerer' : $(this),
+								'options' : JSON.parse('{"url":".\/gs_content.php?item=494c4941535c5265706f7369746f72795c50726f76696465725c5265706f7369746f72794d61696e42617250726f76696465727c7265705f747265655f76696577"}')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try { $(document).on('il_signal_6a7f1c912d71f4_14792749', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('toggle', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c9132e5e1_67916394'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c912d7209_39727912', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('engage', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c9132e5e1_67916394'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c912d7220_84639725', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('replace', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c9132e5e1_67916394'
+                    ); 
+                    return false;});il.UI.maincontrols.mainbar.addPartIdAndEntry('0:0', 'slate', 'il_ui_fw_6a7f1c9132e5e1_67916394'); } catch (e) { console.log(e); }
+try { 
+                        il.UI.maincontrols.mainbar.addPartIdAndEntry('0:1', 'triggerer', 'il_ui_fw_6a7f1c9132faf0_71855621', false);
+                        il.UI.maincontrols.mainbar.addMapping('_mb_more_entry','0:1');
+                    
+$('#il_ui_fw_6a7f1c9132faf0_71855621').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c9132e829_70375660',
+							{
+								'id' : 'il_signal_6a7f1c9132e829_70375660', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('{"entry_id":"0:1","action":"trigger"}')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try { $(document).on('il_signal_6a7f1c9132a931_78453838', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('toggle', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c913301b6_63026627'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c9132a969_45823322', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('engage', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c913301b6_63026627'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c9132a971_42398849', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('replace', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c913301b6_63026627'
+                    ); 
+                    return false;});il.UI.maincontrols.mainbar.addPartIdAndEntry('0:1', 'slate', 'il_ui_fw_6a7f1c913301b6_63026627'); } catch (e) { console.log(e); }
+try { il.UI.maincontrols.mainbar.addToolEntry('T:0', false, true, '696c48656c704d65746142617250726f76696465727c68656c70');
+                        il.UI.maincontrols.mainbar.addPartIdAndEntry('T:0', 'triggerer', 'il_ui_fw_6a7f1c91330f09_59606981', true);
+                        il.UI.maincontrols.mainbar.addMapping('696c48656c704d65746142617250726f76696465727c68656c70','T:0');
+                    
+$('#il_ui_fw_6a7f1c91330f09_59606981').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c91330422_94860039',
+							{
+								'id' : 'il_signal_6a7f1c91330422_94860039', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('{"entry_id":"T:0","action":"trigger"}')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try {  } catch (e) { console.log(e); }
+try { 
+                                                 $('body').on('il-help-toggle-slate', function(){
+                                                    if (!$('#il_ui_fw_6a7f1c913317d2_59819184').hasClass('disengaged')) {
+                                                        il.Help.resetCurrentPage();
+                                                        il.UI.maincontrols.mainbar.removeTool('696c48656c704d65746142617250726f76696465727c68656c70');
+                                                    } else {
+                                                        il.UI.maincontrols.mainbar.engageTool('696c48656c704d65746142617250726f76696465727c68656c70');
+                                                        const panel = document.getElementById('ilHelpPanel');
+                                                        const firstFocusElement = panel.querySelector('a,input,[role=\'button\'],button');
+                                                        if (firstFocusElement) {
+                                                            firstFocusElement.focus();
+                                                        }
+                                                    }
+                                                 });
+$(document).on('il_signal_6a7f1c912de2e2_85608487', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('toggle', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c913317d2_59819184'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c912de314_29329816', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('engage', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c913317d2_59819184'
+                    ); 
+                    return false;});$(document).on('il_signal_6a7f1c912de334_85040267', function(event, signalData) { 
+                        il.UI.maincontrols.slate.onSignal('replace', 
+                        event, 
+                        signalData, 
+                        'il_ui_fw_6a7f1c913317d2_59819184'
+                    ); 
+                    return false;});il.UI.maincontrols.mainbar.addPartIdAndEntry('T:0', 'slate', 'il_ui_fw_6a7f1c913317d2_59819184'); } catch (e) { console.log(e); }
+try { $('#il_ui_fw_6a7f1c913323c3_90068690').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c912d70c5_43720879',
+							{
+								'id' : 'il_signal_6a7f1c912d70c5_43720879', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('{"action":"toggle_tools"}')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try { $('#il_ui_fw_6a7f1c91333858_88543375').on('click', function(event) {
+						$(this).trigger('il_signal_6a7f1c912d70a4_42009786',
+							{
+								'id' : 'il_signal_6a7f1c912d70a4_42009786', 'event' : 'click',
+								'triggerer' : $(this),
+								'options' : JSON.parse('{"action":"disengage_all"}')
+							}
+						);
+						return false;
+					}); } catch (e) { console.log(e); }
+try { il.Language.setLangVar('close', "Schlie\u00dfen"); } catch (e) { console.log(e); }
+try { il.UI.maincontrols.mainbar.addTriggerSignal('il_signal_6a7f1c912d70a4_42009786');il.UI.maincontrols.mainbar.addTriggerSignal('il_signal_6a7f1c912d70c5_43720879');il.UI.maincontrols.mainbar.addTriggerSignal('il_signal_6a7f1c9132ab56_34781032');il.UI.maincontrols.mainbar.addTriggerSignal('il_signal_6a7f1c9132e829_70375660');il.UI.maincontrols.mainbar.addTriggerSignal('il_signal_6a7f1c91330422_94860039');il.UI.maincontrols.mainbar.addTriggerSignal('il_signal_6a7f1c912de452_10458053');
+                    window.addEventListener('resize', il.UI.maincontrols.mainbar.adjustToScreenSize);
+                    il.UI.maincontrols.mainbar.init('');
+                 } catch (e) { console.log(e); }
+try {  } catch (e) { console.log(e); }
+try { document.getElementById("il_ui_fw_6a7f1c91337030_06472019").addEventListener('click', e => il.Footer.permalink.copyText("https:\/\/ilias.studium.kit.edu\/goto.php\/auth\/login")
+                        .then(() => il.Footer.permalink.showTooltip(e.target.nextElementSibling, 5000))); } catch (e) { console.log(e); }
+		});
+	
+</script>
+
+
+</body>
+</html>
