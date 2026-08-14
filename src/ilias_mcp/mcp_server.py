@@ -28,9 +28,12 @@ def _get_client() -> ILIASClient:
 
 
 @mcp.tool()
-def list_courses() -> list[dict]:
-    """List the current user's ILIAS courses ("Meine Kurse" on the dashboard)."""
-    return [asdict(node) for node in _get_client().list_my_courses()]
+def list_courses(favorites_only: bool = False) -> list[dict]:
+    """List the current user's ILIAS course/group memberships. By default
+    returns every course/group the user belongs to; set favorites_only=True
+    for just the personal dashboard's "Meine Kurse" widget (pinned items
+    only, a strict subset)."""
+    return [asdict(node) for node in _get_client().list_my_courses(favorites_only=favorites_only)]
 
 
 @mcp.tool()

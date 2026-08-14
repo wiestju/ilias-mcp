@@ -35,10 +35,14 @@ Known gaps:
   options in the markup, but the login flow only drives the plain
   username/password path. Will need real-world testing against an
   MFA-enabled account to implement.
-- `list_my_courses()` uses the "Meine Kurse" dashboard widget
-  (`ilDashboardGUI&cmd=show`), which reflects manually-pinned items; ILIAS's
-  full membership list (`ilMembershipOverviewGUI`) is a superset and may be
-  worth exposing as an alternative/additional listing.
+
+`list_my_courses()` (CLI: `courses`, MCP tool: `list_courses`) returns the
+full membership overview (`ilMembershipOverviewGUI`) by default — every
+course/group the user belongs to. Pass `favorites_only=True`
+(`--favorites` on the CLI) for just the personal dashboard's "Meine Kurse"
+widget instead, which is a strict subset of manually/automatically pinned
+items — confirmed live to omit courses/groups the user is a member of but
+never pinned to the dashboard.
 
 ## Quickstart
 

@@ -42,13 +42,23 @@ class ILIASClient:
         if not self._logged_in:
             raise NotLoggedInError("Call login() before using the ILIAS client.")
 
-    def list_my_courses(self) -> list[Node]:
-        """List the courses on the personal dashboard ("Meine Kurse")."""
+    def list_my_courses(self, favorites_only: bool = False) -> list[Node]:
+        """List the user's ILIAS course/group memberships.
+
+        By default this is the full membership overview — every course/group
+        the user belongs to. Pass ``favorites_only=True`` for just the
+        personal dashboard's "Meine Kurse" widget instead: a strict subset of
+        manually/automatically pinned items, confirmed live to omit courses
+        the user is a member of but never pinned (and, conversely, to
+        include non-membership items like forums that the full overview
+        doesn't list).
+        """
         self._require_login()
-        resp = self.session.get(
-            f"{self.base_url}/ilias.php",
-            params={"baseClass": "ilDashboardGUI", "cmd": "show"},
-        )
+        if favorites_only:
+            params = {"baseClass": "ilDashboardGUI", "cmd": "show"}
+        else:
+            params = {"baseClass": "ilMembershipOverviewGUI"}
+        resp = self.session.get(f"{self.base_url}/ilias.php", params=params)
         resp.raise_for_status()
         return parse_repository_items(resp.text, self.base_url)
 

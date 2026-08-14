@@ -38,11 +38,17 @@ def login() -> None:
 
 
 @app.command()
-def courses() -> None:
-    """List your courses ("Meine Kurse")."""
+def courses(
+    favorites: bool = typer.Option(
+        False,
+        "--favorites",
+        help="Only the Dashboard 'Meine Kurse' widget (pinned items) instead of all memberships",
+    ),
+) -> None:
+    """List your course/group memberships (all of them by default)."""
     try:
         client = build_client()
-        nodes = client.list_my_courses()
+        nodes = client.list_my_courses(favorites_only=favorites)
     except IliasMcpError as exc:
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
