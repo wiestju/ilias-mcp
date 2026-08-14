@@ -3,14 +3,13 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from pathlib import Path
-from urllib.parse import urljoin
 
 import requests
 
-from ..exceptions import NotLoggedInError, ParseError
+from ..exceptions import NotLoggedInError
 from ..providers.base import AuthProvider
 from .models import Node
-from .parsing import extract_file_download_href, parse_repository_items
+from .parsing import parse_repository_items
 
 _CONTENT_DISPOSITION_FILENAME_RE = re.compile(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)"?')
 
@@ -63,23 +62,19 @@ class ILIASClient:
         resp.raise_for_status()
         return parse_repository_items(resp.text, self.base_url)
 
-    def download_file(self, node: Node, dest_dir: Path) -> Path:
-        """Download a file-object node into dest_dir, returning the local path."""
+    def download_file(self, ref_id: str, dest_dir: Path) -> Path:
+        """Download a file object by ref_id into dest_dir, returning the local path.
+
+        Uses ILIAS's ``goto.php`` direct-download permalink
+        (``/goto.php/file/<ref_id>/download``), confirmed live against a real
+        KIT file object — no page-scraping needed for this step.
+        """
         self._require_login()
         dest_dir.mkdir(parents=True, exist_ok=True)
 
-        download_url = node.download_url
-        if download_url is None:
-            page = self.session.get(node.url)
-            page.raise_for_status()
-            href = extract_file_download_href(page.text)
-            if href is None:
-                raise ParseError(f"No download link found on file page: {node.url}")
-            download_url = urljoin(node.url, href)
-
-        with self.session.get(download_url, stream=True) as resp:
+        with self.session.get(f"{self.base_url}/goto.php/file/{ref_id}/download", stream=True) as resp:
             resp.raise_for_status()
-            filename = _filename_from_response(resp) or node.title
+            filename = _filename_from_response(resp) or f"ilias_file_{ref_id}"
             dest_path = dest_dir / filename
             with open(dest_path, "wb") as fh:
                 fh.writelines(resp.iter_content(chunk_size=64 * 1024))

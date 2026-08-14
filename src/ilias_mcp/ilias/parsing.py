@@ -1,31 +1,54 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 from ..exceptions import ParseError
 from .models import Node
 
-_REF_ID_RE = re.compile(r"ref_id=(\d+)")
+# Two ways ILIAS links to a repository object, both observed on a real,
+# authenticated KIT dashboard (ilMembershipOverviewGUI) on 2026-08-14:
+#   - a "goto" permalink:      https://<host>/goto.php/crs/2879639
+#   - a classic query param:   ilias.php?...&ref_id=2879639&...
+_GOTO_RE = re.compile(r"/goto\.php/([a-zA-Z]+)/(\d+)")
+_REF_ID_QUERY_RE = re.compile(r"[?&]ref_id=(\d+)")
 
-# ILIAS repository markup has changed across major versions (5.4 vs 7 vs 8)
-# and can carry theme-specific customizations, so we try a few known
-# item-title selector patterns in order rather than betting on exactly one.
-# NOT yet verified against a real authenticated KIT page — refine this list
-# once a real dashboard/course HTML dump is available (ILIAS_MCP_DEBUG_DUMP=1).
+# Item-title selector, confirmed against the real KIT dashboard markup:
+#   <h4 class="il-item-title"><a href="...">Course Name</a></h4>
+# Kept as a tried-in-order list (rather than betting on exactly one) since
+# ILIAS markup does vary across versions/themes and other providers' ILIAS
+# installations may differ from KIT's.
 _ITEM_TITLE_SELECTORS = (
-    "a.il_ContainerItemTitle",
     ".il-item-title a",
+    "a.il_ContainerItemTitle",
     ".il-std-item-title a",
     ".ilContainerItemTitle a",
 )
 
 
-def _extract_ref_id(href: str) -> str | None:
-    match = _REF_ID_RE.search(href)
-    return match.group(1) if match else None
+def _extract_ref_id_and_type(url: str) -> tuple[str | None, str | None]:
+    goto_match = _GOTO_RE.search(url)
+    if goto_match:
+        obj_type, ref_id = goto_match.groups()
+        return ref_id, obj_type
+    query_match = _REF_ID_QUERY_RE.search(url)
+    if query_match:
+        return query_match.group(1), None
+    return None, None
+
+
+def _find_description(anchor: Tag) -> str | None:
+    # Sibling of the title's containing block within the same item card:
+    #   <div class="il-item ..."><h4 class="il-item-title">...</h4>
+    #     <div class="il-item-description">...</div></div>
+    container = anchor.find_parent(class_="il-item")
+    if container is None:
+        return None
+    description = container.select_one(".il-item-description")
+    return description.get_text(strip=True) if description else None
 
 
 def parse_repository_items(html: str, base_url: str) -> list[Node]:
@@ -57,28 +80,18 @@ def parse_repository_items(html: str, base_url: str) -> list[Node]:
         if not href:
             continue
         full_url = urljoin(base_url + "/", href)
-        ref_id = _extract_ref_id(full_url)
+        ref_id, obj_type = _extract_ref_id_and_type(full_url)
         if ref_id is None:
             continue
         title = a.get_text(strip=True)
         if not title:
             continue
-        nodes[ref_id] = Node(ref_id=ref_id, title=title, url=full_url)
+        nodes[ref_id] = Node(
+            ref_id=ref_id,
+            title=title,
+            url=full_url,
+            obj_type=obj_type,
+            description=_find_description(a),
+        )
 
     return list(nodes.values())
-
-
-def extract_file_download_href(html: str) -> str | None:
-    """Best-effort: find the download link on an ILIAS file-object page.
-
-    Provisional, same caveat as parse_repository_items — ILIAS file object
-    pages typically expose a "cmd=sendfile" or "cmd=download" link.
-    """
-    soup = BeautifulSoup(html, "lxml")
-    for a in soup.find_all("a", href=True):
-        href = a["href"]
-        query = parse_qs(urlparse(href).query)
-        cmd = query.get("cmd", [""])[0].lower()
-        if cmd in ("sendfile", "download"):
-            return href
-    return None

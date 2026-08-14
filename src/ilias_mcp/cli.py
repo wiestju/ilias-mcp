@@ -9,7 +9,6 @@ from rich.table import Table
 from .bootstrap import build_client
 from .config import Settings
 from .exceptions import IliasMcpError
-from .ilias.models import Node
 from .providers.registry import discover_providers
 
 app = typer.Typer(
@@ -47,9 +46,9 @@ def courses() -> None:
     except IliasMcpError as exc:
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
-    table = Table("ref_id", "title", "url")
+    table = Table("ref_id", "type", "title", "url")
     for node in nodes:
-        table.add_row(node.ref_id, node.title, node.url)
+        table.add_row(node.ref_id, node.obj_type or "", node.title, node.url)
     console.print(table)
 
 
@@ -62,9 +61,9 @@ def tree(ref_id: str) -> None:
     except IliasMcpError as exc:
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)
-    table = Table("ref_id", "title", "url")
+    table = Table("ref_id", "type", "title", "url")
     for node in nodes:
-        table.add_row(node.ref_id, node.title, node.url)
+        table.add_row(node.ref_id, node.obj_type or "", node.title, node.url)
     console.print(table)
 
 
@@ -77,12 +76,7 @@ def download(
     try:
         client = build_client()
         dest_dir = out or Settings().download_dir
-        node = Node(
-            ref_id=ref_id,
-            title=f"ilias_file_{ref_id}",
-            url=f"{client.base_url}/ilias.php?ref_id={ref_id}&baseClass=ilrepositorygui",
-        )
-        path = client.download_file(node, dest_dir)
+        path = client.download_file(ref_id, dest_dir)
     except IliasMcpError as exc:
         console.print(f"[red]Error:[/red] {exc}")
         raise typer.Exit(1)

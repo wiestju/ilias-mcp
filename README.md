@@ -16,20 +16,29 @@ Goals:
 
 ## Status
 
-Early, pre-first-login state. The login flow (`shib_login.php` → Shibboleth
-IdP → SAML response relay back into ILIAS) was implemented and unit-tested
-against a real, unauthenticated fetch of KIT's login pages (see
-`tests/fixtures/`), but has not yet been exercised against a real account.
-The repository-listing HTML parsing (`ilias_mcp/ilias/parsing.py`) is
-similarly provisional — ILIAS markup differs across versions/themes, and it
-needs a real authenticated page to be dialed in.
+Login, course listing, folder navigation, and file download are implemented
+and verified end-to-end against a real KIT account (2026-08-14): the
+Shibboleth login flow, `ilias_mcp/ilias/parsing.py`'s repository-item
+parsing, and the `goto.php/file/<ref_id>/download` direct-download permalink
+all work against live ILIAS pages, not just fixtures.
 
-Roadmap, in priority order (see `.env.example` to unblock the next step):
+Roadmap, in priority order (see `.env.example` to get logged in):
 
-1. ~~Course/folder tree listing~~ — implemented, needs live-HTML verification.
-2. ~~File download~~ — implemented, needs live-HTML verification.
+1. ~~Course/folder tree listing~~ — done, live-verified.
+2. ~~File download~~ — done, live-verified.
 3. Announcements/news per course — not started.
 4. Exercises/assignments (deadlines, submission status) — not started.
+
+Known gaps:
+
+- No MFA/passkey support yet — KIT's IdP form includes WebAuthn/SPNEGO
+  options in the markup, but the login flow only drives the plain
+  username/password path. Will need real-world testing against an
+  MFA-enabled account to implement.
+- `list_my_courses()` uses the "Meine Kurse" dashboard widget
+  (`ilDashboardGUI&cmd=show`), which reflects manually-pinned items; ILIAS's
+  full membership list (`ilMembershipOverviewGUI`) is a superset and may be
+  worth exposing as an alternative/additional listing.
 
 ## Quickstart
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections.abc import Mapping
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -112,8 +112,16 @@ class ShibbolethAuthProvider(AuthProvider):
         resp = session.get(f"{self.base_url}{self.shib_login_path}")
         _dump(0, resp)
         credentials_submitted = False
+        base_host = urlparse(self.base_url).netloc
 
         for hop in range(1, self.max_hops + 1):
+            if urlparse(resp.url).netloc == base_host:
+                # Back on the SP's own domain — the cross-domain IdP relay
+                # dance is over. Anything on the page from here on (e.g. a
+                # header search form) is unrelated to login and must not be
+                # auto-submitted.
+                break
+
             soup = BeautifulSoup(resp.text, "lxml")
             form = soup.find("form")
             if form is None:
