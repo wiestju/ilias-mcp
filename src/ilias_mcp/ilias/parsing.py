@@ -16,17 +16,37 @@ from .models import Node
 _GOTO_RE = re.compile(r"/goto\.php/([a-zA-Z]+)/(\d+)")
 _REF_ID_QUERY_RE = re.compile(r"[?&]ref_id=(\d+)")
 
-# Item-title selector, confirmed against the real KIT dashboard markup:
-#   <h4 class="il-item-title"><a href="...">Course Name</a></h4>
-# Kept as a tried-in-order list (rather than betting on exactly one) since
-# ILIAS markup does vary across versions/themes and other providers' ILIAS
-# installations may differ from KIT's.
+# Item-title selector: the newer "card" style used on the dashboard /
+# membership overview, and the classic repository-list style used inside
+# courses/folders — both confirmed against real, authenticated KIT pages.
 _ITEM_TITLE_SELECTORS = (
     ".il-item-title a",
     "a.il_ContainerItemTitle",
     ".il-std-item-title a",
     ".ilContainerItemTitle a",
 )
+
+# Standard-icon filenames embed ILIAS's own type code directly
+# (icon_fold.svg, icon_frm.svg, ...) — confirmed live and preferred when
+# present since it's unambiguous and independent of UI language. Custom
+# per-object icons (icon_custom.svg) don't carry the type, so the alt-text
+# map below is the fallback, also confirmed live (German KIT UI).
+_ICON_SRC_TYPE_RE = re.compile(r"icon_([a-z]+)\.svg")
+_ICON_ALT_TYPE_MAP = {
+    "Kurs": "crs",
+    "Gruppe": "grp",
+    "Ordner": "fold",
+    "Verzeichnis": "fold",
+    "Forum": "frm",
+    "Test": "tst",
+    "Übung": "exc",
+    "Lernmodul ILIAS": "lm",
+    "Opencast": "xoct",
+    "Weblink": "webr",
+    "Wiki": "wiki",
+    "Datei": "file",
+    "Inline Datei": "file",
+}
 
 
 def _extract_ref_id_and_type(url: str) -> tuple[str | None, str | None]:
@@ -40,11 +60,34 @@ def _extract_ref_id_and_type(url: str) -> tuple[str | None, str | None]:
     return None, None
 
 
-def _find_description(anchor: Tag) -> str | None:
-    # Sibling of the title's containing block within the same item card:
-    #   <div class="il-item ..."><h4 class="il-item-title">...</h4>
-    #     <div class="il-item-description">...</div></div>
-    container = anchor.find_parent(class_="il-item")
+def _find_item_container(anchor: Tag) -> Tag | None:
+    # Newer "card" style (dashboard/membership overview) vs. classic
+    # repository-list style (contents of a course/folder) — both real,
+    # confirmed KIT markup.
+    return anchor.find_parent(class_="il-item") or anchor.find_parent(
+        class_="ilContainerListItemOuter"
+    )
+
+
+def _find_icon(container: Tag | None) -> Tag | None:
+    if container is None:
+        return None
+    return container.select_one("img.icon") or container.select_one("img.ilListItemIcon")
+
+
+def _icon_obj_type(icon: Tag | None) -> str | None:
+    if icon is None:
+        return None
+    src_match = _ICON_SRC_TYPE_RE.search(icon.get("src", ""))
+    # "custom" isn't a real ILIAS type code — it just means the course/group
+    # replaced the standard icon with its own image, confirmed live on
+    # several of the user's own courses. Fall back to the alt-text map then.
+    if src_match and src_match.group(1) != "custom":
+        return src_match.group(1)
+    return _ICON_ALT_TYPE_MAP.get(icon.get("alt"))
+
+
+def _find_description(container: Tag | None) -> str | None:
     if container is None:
         return None
     description = container.select_one(".il-item-description")
@@ -80,18 +123,20 @@ def parse_repository_items(html: str, base_url: str) -> list[Node]:
         if not href:
             continue
         full_url = urljoin(base_url + "/", href)
-        ref_id, obj_type = _extract_ref_id_and_type(full_url)
+        ref_id, url_obj_type = _extract_ref_id_and_type(full_url)
         if ref_id is None:
             continue
         title = a.get_text(strip=True)
         if not title:
             continue
+        container = _find_item_container(a)
+        obj_type = url_obj_type or _icon_obj_type(_find_icon(container))
         nodes[ref_id] = Node(
             ref_id=ref_id,
             title=title,
             url=full_url,
             obj_type=obj_type,
-            description=_find_description(a),
+            description=_find_description(container),
         )
 
     return list(nodes.values())
