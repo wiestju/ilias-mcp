@@ -9,6 +9,8 @@ build/
 .ilias_mcp_cache/
 .pytest_cache/
 .ruff_cache/
+.coverage
+htmlcov/
 *.session.json
 debug_dumps/
 .DS_Store

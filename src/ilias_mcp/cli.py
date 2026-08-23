@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import getpass
 from pathlib import Path
 
+import keyring
 import typer
 from rich.console import Console
 from rich.table import Table
 
 from .bootstrap import build_client
-from .config import Settings
+from .config import KEYRING_SERVICE, Settings, require_provider_name
 from .exceptions import IliasMcpError
-from .providers.registry import discover_providers
+from .providers.registry import discover_providers, get_provider_class
 
 app = typer.Typer(
     help="CLI for ILIAS with pluggable login providers (KIT via Shibboleth built in)."
@@ -24,6 +26,41 @@ def providers() -> None:
     for name, cls in sorted(discover_providers().items()):
         table.add_row(name, cls.display_name, cls.default_base_url)
     console.print(table)
+
+
+@app.command()
+def init(
+    provider_name: str = typer.Option(
+        None, "--provider", help="Provider to configure (default: ILIAS_PROVIDER / 'kit')"
+    ),
+) -> None:
+    """Interactively store your ILIAS login in the OS keyring (macOS
+    Keychain / Windows Credential Manager / Linux Secret Service) instead
+    of a plaintext .env file — recommended for a real university password,
+    which (unlike a scoped API key) can't be revoked or rate-limited if it
+    leaks."""
+    try:
+        provider_cls = get_provider_class(
+            require_provider_name(provider_name or Settings().ilias_provider)
+        )
+    except IliasMcpError as exc:
+        console.print(f"[red]Error:[/red] {exc}")
+        raise typer.Exit(1)
+
+    prefix = provider_cls.name.upper()
+    console.print(
+        f"Storing credentials for [bold]{provider_cls.display_name}[/bold] "
+        f"(provider: {provider_cls.name}) in the OS keyring."
+    )
+    for field in provider_cls.credential_fields:
+        env_name = f"{prefix}_{field.upper()}"
+        value = (
+            getpass.getpass(f"{field}: ")
+            if "password" in field.lower()
+            else typer.prompt(field)
+        )
+        keyring.set_password(KEYRING_SERVICE, env_name, value)
+    console.print("[green]Done.[/green] Run 'ilias-mcp login' to verify.")
 
 
 @app.command()

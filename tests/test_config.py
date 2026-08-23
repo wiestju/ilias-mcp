@@ -1,8 +1,17 @@
 import pytest
 
-from ilias_mcp.config import load_credentials
-from ilias_mcp.exceptions import MissingCredentialsError
+import ilias_mcp.config as config_module
+from ilias_mcp.config import load_credentials, require_provider_name
+from ilias_mcp.exceptions import MissingCredentialsError, ProviderNotFoundError
 from ilias_mcp.providers.kit import KITProvider
+
+
+@pytest.fixture(autouse=True)
+def no_real_keyring(monkeypatch):
+    """Isolate tests from whatever the developer's real OS keyring happens
+    to hold (e.g. actual KIT credentials stored via `ilias-mcp init`) —
+    otherwise these tests' pass/fail depends on the machine they run on."""
+    monkeypatch.setattr(config_module.keyring, "get_password", lambda service, name: None)
 
 
 def test_load_credentials_from_env_file(tmp_path, monkeypatch):
@@ -35,3 +44,12 @@ def test_load_credentials_missing_raises(tmp_path, monkeypatch):
 
     with pytest.raises(MissingCredentialsError):
         load_credentials(KITProvider(), env_file=env_file)
+
+
+def test_require_provider_name_raises_when_unset():
+    with pytest.raises(ProviderNotFoundError):
+        require_provider_name(None)
+
+
+def test_require_provider_name_passes_through_value():
+    assert require_provider_name("kit") == "kit"
