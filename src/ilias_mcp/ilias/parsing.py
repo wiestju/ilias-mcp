@@ -142,6 +142,68 @@ def parse_repository_items(html: str, base_url: str) -> list[Node]:
     return list(nodes.values())
 
 
+_ASS_ID_RE = re.compile(r"ass_id=(\d+)")
+
+
+def parse_exercise_overview(html: str) -> list[dict[str, str | None]]:
+    """Parse the assignment list off an ILIAS exercise overview page
+    (``ilExerciseHandlerGUI``/``ilObjExerciseGUI&cmd=showOverview``,
+    ``mode=all`` — the default ``mode=ongoing`` hides everything outside
+    the current date range, e.g. a past semester's finished assignments)
+    — read-only: this is the student-facing overview, not a submission
+    endpoint.
+
+    Both states confirmed live against a real KIT exercise (ref_id
+    2911807, "Übungsblätter", 2026-08-23) and structurally different, not
+    just "empty vs non-empty" of the same layout:
+
+    - Populated: each assignment is a ``.il-item.il-std-item`` card (the
+      ``.il-std-item`` qualifier matters — bare ``.il-item`` also matches
+      unrelated page chrome like the notification-bell widget) with a
+      ``.il-item-title a`` (title + ``ass_id=<id>`` in its href) and
+      ``.il-item-property-name``/``.il-item-property-value`` span pairs
+      (deadline, last submission date, type, grading status, ...).
+    - Empty: a ``.panel-body`` containing an ``.alert-info`` box with
+      "Keine Übungseinheiten vorhanden." — this wrapper is only present
+      in the empty state, not around populated results.
+    """
+    soup = BeautifulSoup(html, "lxml")
+
+    assignments: list[dict[str, str | None]] = []
+    for item in soup.select(".il-item.il-std-item"):
+        title_link = item.select_one(".il-item-title a")
+        if title_link is None:
+            continue
+        ass_id_match = _ASS_ID_RE.search(title_link.get("href", ""))
+        status_col = item.select_one(".col-sm-3")
+        assignment: dict[str, str | None] = {
+            "assignment_id": ass_id_match.group(1) if ass_id_match else None,
+            "title": title_link.get_text(strip=True),
+            "status": status_col.get_text(strip=True) if status_col else None,
+        }
+        names = item.select(".il-item-property-name")
+        values = item.select(".il-item-property-value")
+        for name_el, value_el in zip(names, values, strict=False):
+            key = name_el.get_text(strip=True)
+            if key:
+                assignment[key] = value_el.get_text(strip=True)
+        assignments.append(assignment)
+
+    if assignments:
+        return assignments
+
+    empty_state = soup.select_one(".panel-body .alert-info")
+    if empty_state and "keine" in empty_state.get_text(strip=True).lower():
+        return []
+
+    raise ParseError(
+        "Could not find either assignment cards or the known empty-state "
+        "message on this exercise overview page. Rerun with "
+        "ILIAS_MCP_DEBUG_DUMP=1 and check parse_exercise_overview in "
+        "ilias_mcp/ilias/parsing.py."
+    )
+
+
 def parse_info_properties(html: str) -> dict[str, str]:
     """Parse the label/value property pairs off an ILIAS object's Info
     screen (``ilInfoScreenGUI&cmd=showSummary``).

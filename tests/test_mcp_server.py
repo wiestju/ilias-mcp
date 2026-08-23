@@ -139,6 +139,9 @@ class _FakeListingClient:
     def read_forum_thread(self, thread_url):
         return self._results["read_forum_thread"]
 
+    def list_exercise_assignments(self, ref_id):
+        return self._results["list_exercise_assignments"]
+
 
 def test_list_courses_tool_serializes_nodes(monkeypatch):
     from ilias_mcp.ilias.models import Node
@@ -183,3 +186,11 @@ def test_read_forum_thread_tool_passes_through(monkeypatch):
     )
 
     assert mcp_server.read_forum_thread("https://x/thread") == posts
+
+
+def test_list_exercise_assignments_tool_passes_through(monkeypatch):
+    monkeypatch.setattr(
+        mcp_server, "_get_client", lambda: _FakeListingClient(list_exercise_assignments=[])
+    )
+
+    assert mcp_server.list_exercise_assignments("2911807") == []

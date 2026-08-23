@@ -2,6 +2,7 @@ import pytest
 
 from ilias_mcp.exceptions import ParseError
 from ilias_mcp.ilias.parsing import (
+    parse_exercise_overview,
     parse_forum_posts,
     parse_forum_threads,
     parse_info_properties,
@@ -189,3 +190,80 @@ def test_parse_info_properties_parses_label_value_pairs():
         "Größe": "1.2 MB",
         "Erstellt am": "14.08.2026, 12:00",
     }
+
+
+def test_parse_exercise_overview_empty_state_confirmed_live():
+    # Exact panel-body markup dumped from a real, authenticated KIT exercise
+    # overview page (ref_id 2911807, "Übungsblätter") on 2026-08-23.
+    html = """
+    <div class="panel-body">
+      <div class="alert alert-info" role="status">
+        <div class="ilAccHeadingHidden">Informationsmeldung</div>Keine Übungseinheiten vorhanden.
+      </div>
+    </div>
+    """
+
+    assert parse_exercise_overview(html) == []
+
+
+def test_parse_exercise_overview_raises_when_panel_missing():
+    with pytest.raises(ParseError):
+        parse_exercise_overview("<html><body>not an exercise page</body></html>")
+
+
+def test_parse_exercise_overview_raises_on_unrecognized_markup():
+    html = """
+    <div class="panel-body">
+      <div class="some-assignment-row">Blatt 1 — Frist: 01.09.2026</div>
+    </div>
+    """
+
+    with pytest.raises(ParseError):
+        parse_exercise_overview(html)
+
+
+def test_parse_exercise_overview_parses_populated_assignments():
+    # Trimmed but structurally exact markup from a real, authenticated KIT
+    # exercise overview page (ref_id 2911807, "Übungsblätter", mode=all)
+    # on 2026-08-23 — a past semester's finished assignments, confirming
+    # this needs mode=all rather than the page's own default (ongoing-only,
+    # which hides everything outside the current date range).
+    html = """
+    <div class="il-item il-notification-item">not a real assignment</div>
+    <div class="il-item il-std-item">
+      <div class="row">
+        <div class="col-sm-3">Beendet </div>
+        <div class="col-sm-9">
+          <h4 class="il-item-title">
+            <a href="ilias.php?cmdClass=ilAssignmentPresentationGUI&amp;ref_id=2911807&amp;ass_id=105632">1. Übungsblatt</a>
+          </h4>
+          <div class="row">
+            <div class="col-md-6"><span class="il-item-property-name">Beendet am</span><span class="il-item-property-value">8. Mai 2026, 09:45</span></div>
+            <div class="col-md-6"><span class="il-item-property-name">Anforderung</span><span class="il-item-property-value">Verpflichtend</span></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6"><span class="il-item-property-name">Datum der letzten Abgabe</span><span class="il-item-property-value">Bisher keine Abgabe</span></div>
+            <div class="col-md-6"><span class="il-item-property-name">Type</span><span class="il-item-property-value">Datei</span></div>
+          </div>
+          <div class="row">
+            <div class="col-md-6"><span class="il-item-property-name">Status</span><span class="il-item-property-value">Nicht bewertet</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+
+    assignments = parse_exercise_overview(html)
+
+    assert assignments == [
+        {
+            "assignment_id": "105632",
+            "title": "1. Übungsblatt",
+            "status": "Beendet",
+            "Beendet am": "8. Mai 2026, 09:45",
+            "Anforderung": "Verpflichtend",
+            "Datum der letzten Abgabe": "Bisher keine Abgabe",
+            "Type": "Datei",
+            "Status": "Nicht bewertet",
+        }
+    ]

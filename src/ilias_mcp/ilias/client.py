@@ -9,7 +9,12 @@ import requests
 from ..exceptions import NotLoggedInError, ParseError
 from ..providers.base import AuthProvider
 from .models import Node
-from .parsing import parse_forum_posts, parse_forum_threads, parse_repository_items
+from .parsing import (
+    parse_exercise_overview,
+    parse_forum_posts,
+    parse_forum_threads,
+    parse_repository_items,
+)
 
 _CONTENT_DISPOSITION_FILENAME_RE = re.compile(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)"?')
 
@@ -163,6 +168,38 @@ class ILIASClient:
             resp = self.session.get(thread_url)
             resp.raise_for_status()
             return parse_forum_posts(resp.text)
+
+        try:
+            return _fetch()
+        except ParseError:
+            if self._reauth_if_expired():
+                return _fetch()
+            raise
+
+    def list_exercise_assignments(self, ref_id: str) -> list[dict[str, str | None]]:
+        """List the assignment units of an ILIAS exercise object (obj_type
+        "exc"), read-only — no submission/upload support by design.
+
+        Uses ``mode=all`` rather than the page's own default (``ongoing``
+        only), which hides everything outside the current date range —
+        including, for a past semester, every finished assignment along
+        with its deadline and submission status.
+        """
+        self._require_login()
+
+        def _fetch() -> list[dict[str, str | None]]:
+            resp = self.session.get(
+                f"{self.base_url}/ilias.php",
+                params={
+                    "baseClass": "ilexercisehandlergui",
+                    "cmdClass": "ilObjExerciseGUI",
+                    "cmd": "showOverview",
+                    "ref_id": ref_id,
+                    "mode": "all",
+                },
+            )
+            resp.raise_for_status()
+            return parse_exercise_overview(resp.text)
 
         try:
             return _fetch()

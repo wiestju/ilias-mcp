@@ -32,6 +32,12 @@ _FORUM_POST_HTML = """
 </div>
 """
 
+_EMPTY_EXERCISE_HTML = """
+<div class="panel-body">
+  <div class="alert alert-info" role="status">Keine Übungseinheiten vorhanden.</div>
+</div>
+"""
+
 
 def _logged_in_client() -> ILIASClient:
     client = ILIASClient(KITProvider(base_url=BASE))
@@ -157,3 +163,23 @@ def test_read_forum_thread_parses_posts():
     assert posts == [
         {"author": "Prof. Dr. Test", "content": "Die Klausur findet nun am 15.02. statt."}
     ]
+
+
+@responses.activate
+def test_list_exercise_assignments_parses_empty_exercise():
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_EMPTY_EXERCISE_HTML, status=200)
+    client = _logged_in_client()
+
+    assert client.list_exercise_assignments("2911807") == []
+
+
+@responses.activate
+def test_list_exercise_assignments_reauths_on_expired_session():
+    client, provider = _client_with_expired_session(initially_logged_in=False)
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_NO_ITEMS_HTML, status=200)
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_EMPTY_EXERCISE_HTML, status=200)
+
+    assignments = client.list_exercise_assignments("2911807")
+
+    assert provider.login_calls == 1
+    assert assignments == []

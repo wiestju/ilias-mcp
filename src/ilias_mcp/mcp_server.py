@@ -76,6 +76,19 @@ def read_forum_thread(thread_url: str) -> list[dict]:
 
 
 @mcp.tool()
+def list_exercise_assignments(ref_id: str) -> list[dict]:
+    """List the assignment units of an ILIAS exercise (an item with
+    obj_type "exc" from list_container), read-only — no submission/upload
+    support by design, this can only look, never turn anything in on the
+    user's behalf. Includes past/finished assignments, not just current
+    ones. Each entry has a title, status ("Beendet"/"Läuft"/...), and
+    whatever properties ILIAS shows for it — commonly a deadline
+    ("Beendet am"), last submission date ("Datum der letzten Abgabe"),
+    submission type, and grading status."""
+    return _get_client().list_exercise_assignments(ref_id)
+
+
+@mcp.tool()
 def download_file(ref_id: str) -> str:
     """Download an ILIAS file object by ref_id into the configured download
     directory and return the local file path."""
