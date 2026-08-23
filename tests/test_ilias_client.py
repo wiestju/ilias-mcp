@@ -17,6 +17,21 @@ _ITEM_HTML = """
 
 _NO_ITEMS_HTML = "<html><body>not a repository listing</body></html>"
 
+_EMPTY_FORUM_HTML = """
+<table id="recf_2905709">
+  <tbody>
+    <tr class="tblrow1"><td class="ilCenter" colspan="4">Keine Einträge</td></tr>
+  </tbody>
+</table>
+"""
+
+_FORUM_POST_HTML = """
+<div class="ilFrmPostRow">
+  <div class="ilFrmPostTitle">Prof. Dr. Test</div>
+  <div class="ilFrmPostContent">Die Klausur findet nun am 15.02. statt.</div>
+</div>
+"""
+
 
 def _logged_in_client() -> ILIASClient:
     client = ILIASClient(KITProvider(base_url=BASE))
@@ -109,3 +124,36 @@ def test_list_my_courses_does_not_reauth_when_session_still_valid():
         client.list_my_courses()
 
     assert provider.login_calls == 0  # a real markup issue, not session expiry
+
+
+@responses.activate
+def test_list_forum_threads_parses_empty_forum():
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_EMPTY_FORUM_HTML, status=200)
+    client = _logged_in_client()
+
+    assert client.list_forum_threads("2905709") == []
+
+
+@responses.activate
+def test_list_forum_threads_reauths_on_expired_session():
+    client, provider = _client_with_expired_session(initially_logged_in=False)
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_NO_ITEMS_HTML, status=200)
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_EMPTY_FORUM_HTML, status=200)
+
+    threads = client.list_forum_threads("2905709")
+
+    assert provider.login_calls == 1
+    assert threads == []
+
+
+@responses.activate
+def test_read_forum_thread_parses_posts():
+    thread_url = f"{BASE}/ilias.php?thr_pk=456&cmd=viewThread"
+    responses.add(responses.GET, thread_url, body=_FORUM_POST_HTML, status=200)
+    client = _logged_in_client()
+
+    posts = client.read_forum_thread(thread_url)
+
+    assert posts == [
+        {"author": "Prof. Dr. Test", "content": "Die Klausur findet nun am 15.02. statt."}
+    ]

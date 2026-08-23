@@ -9,7 +9,7 @@ import requests
 from ..exceptions import NotLoggedInError, ParseError
 from ..providers.base import AuthProvider
 from .models import Node
-from .parsing import parse_repository_items
+from .parsing import parse_forum_posts, parse_forum_threads, parse_repository_items
 
 _CONTENT_DISPOSITION_FILENAME_RE = re.compile(r'filename\*?=(?:UTF-8\'\')?"?([^";]+)"?')
 
@@ -128,3 +128,45 @@ class ILIASClient:
             with open(dest_path, "wb") as fh:
                 fh.writelines(resp.iter_content(chunk_size=64 * 1024))
         return dest_path
+
+    def list_forum_threads(self, ref_id: str) -> list[dict[str, str | None]]:
+        """List the threads in an ILIAS forum, identified by its ref_id.
+
+        There's no separate "announcements" object type — a course's
+        announcements are just a forum (often literally titled
+        "Announcements" or "Organisatorisch"), discoverable via
+        list_container like any other item.
+        """
+        self._require_login()
+
+        def _fetch() -> list[dict[str, str | None]]:
+            resp = self.session.get(
+                f"{self.base_url}/ilias.php",
+                params={"baseClass": "ilRepositoryGUI", "ref_id": ref_id, "cmd": "view"},
+            )
+            resp.raise_for_status()
+            return parse_forum_threads(resp.text, self.base_url)
+
+        try:
+            return _fetch()
+        except ParseError:
+            if self._reauth_if_expired():
+                return _fetch()
+            raise
+
+    def read_forum_thread(self, thread_url: str) -> list[dict[str, str | None]]:
+        """Read the posts in a forum thread, given the absolute thread URL
+        returned by list_forum_threads (its ``url`` field)."""
+        self._require_login()
+
+        def _fetch() -> list[dict[str, str | None]]:
+            resp = self.session.get(thread_url)
+            resp.raise_for_status()
+            return parse_forum_posts(resp.text)
+
+        try:
+            return _fetch()
+        except ParseError:
+            if self._reauth_if_expired():
+                return _fetch()
+            raise

@@ -1,7 +1,12 @@
 import pytest
 
 from ilias_mcp.exceptions import ParseError
-from ilias_mcp.ilias.parsing import parse_repository_items
+from ilias_mcp.ilias.parsing import (
+    parse_forum_posts,
+    parse_forum_threads,
+    parse_info_properties,
+    parse_repository_items,
+)
 
 
 def test_parse_repository_items_finds_known_selector():
@@ -90,3 +95,97 @@ def test_parse_repository_items_infers_type_from_custom_icon_alt_text():
 
     assert len(nodes) == 1
     assert nodes[0].obj_type == "crs"
+
+
+def test_parse_forum_threads_empty_state_confirmed_live():
+    # Exact tbody markup dumped from a real, authenticated KIT forum page
+    # (ref_id 2905709, "Organisatorisch") on 2026-08-23 — this specific
+    # empty-state row is live-confirmed, unlike the populated-row case below.
+    html = """
+    <table id="recf_2905709">
+      <tbody>
+        <tr class="tblrow1">
+          <td class="ilCenter" colspan="4">Keine Einträge</td>
+        </tr>
+      </tbody>
+    </table>
+    """
+
+    assert parse_forum_threads(html, "https://ilias.example.edu") == []
+
+
+def test_parse_forum_threads_raises_when_table_missing():
+    with pytest.raises(ParseError):
+        parse_forum_threads("<html><body>not a forum page</body></html>", "https://ilias.example.edu")
+
+
+def test_parse_forum_threads_parses_populated_row():
+    # UNVERIFIED against real data (see parse_forum_threads' docstring): no
+    # forum available to build/test against had any threads. Best-effort
+    # guess at ILIAS's standard table-row conventions — if this diverges
+    # from a real populated forum, fix the row-parsing in parsing.py and
+    # update this fixture to match.
+    html = """
+    <table id="recf_123">
+      <tbody>
+        <tr>
+          <td><input type="checkbox" /></td>
+          <td><img alt="Thread" /></td>
+          <td><a href="ilias.php?thr_pk=456&cmd=viewThread">Klausurtermin verschoben</a></td>
+          <td>23.08.2026</td>
+        </tr>
+      </tbody>
+    </table>
+    """
+
+    threads = parse_forum_threads(html, "https://ilias.example.edu")
+
+    assert threads == [
+        {
+            "thread_id": "456",
+            "title": "Klausurtermin verschoben",
+            "url": "https://ilias.example.edu/ilias.php?thr_pk=456&cmd=viewThread",
+            "last_update": "23.08.2026",
+        }
+    ]
+
+
+def test_parse_forum_posts_parses_known_selector():
+    # UNVERIFIED against real data, same caveat as test_parse_forum_threads_parses_populated_row.
+    html = """
+    <div class="ilFrmPostRow">
+      <div class="ilFrmPostTitle">Prof. Dr. Test</div>
+      <div class="ilFrmPostContent">Die Klausur findet nun am 15.02. statt.</div>
+    </div>
+    """
+
+    posts = parse_forum_posts(html)
+
+    assert posts == [
+        {"author": "Prof. Dr. Test", "content": "Die Klausur findet nun am 15.02. statt."}
+    ]
+
+
+def test_parse_forum_posts_raises_when_no_known_selector_matches():
+    with pytest.raises(ParseError):
+        parse_forum_posts("<html><body>not a thread page</body></html>")
+
+
+def test_parse_info_properties_parses_label_value_pairs():
+    # Markup shape confirmed live against a real file object's info screen
+    # on 2026-08-14 (see the function's own docstring).
+    html = """
+    <div class="form-group row">
+      <div class="il_InfoScreenProperty">Größe</div>
+      <div class="il_InfoScreenPropertyValue">1.2 MB</div>
+    </div>
+    <div class="form-group row">
+      <div class="il_InfoScreenProperty">Erstellt am</div>
+      <div class="il_InfoScreenPropertyValue">14.08.2026, 12:00</div>
+    </div>
+    """
+
+    assert parse_info_properties(html) == {
+        "Größe": "1.2 MB",
+        "Erstellt am": "14.08.2026, 12:00",
+    }

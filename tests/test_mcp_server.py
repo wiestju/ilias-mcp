@@ -118,3 +118,68 @@ def test_parse_page_spec(spec, page_count, expected):
 def test_parse_page_spec_out_of_range_raises():
     with pytest.raises(ValueError, match="out of range"):
         mcp_server._parse_page_spec("99", 5)
+
+
+class _FakeListingClient:
+    """Stands in for ILIASClient for the thin list_*/forum tool wrappers —
+    these just need to exercise the wiring, not real ILIAS parsing."""
+
+    def __init__(self, **results):
+        self._results = results
+
+    def list_my_courses(self, favorites_only=False):
+        return self._results["list_my_courses"]
+
+    def list_container(self, ref_id):
+        return self._results["list_container"]
+
+    def list_forum_threads(self, ref_id):
+        return self._results["list_forum_threads"]
+
+    def read_forum_thread(self, thread_url):
+        return self._results["read_forum_thread"]
+
+
+def test_list_courses_tool_serializes_nodes(monkeypatch):
+    from ilias_mcp.ilias.models import Node
+
+    node = Node(ref_id="1", title="Kurs A", url="https://x/1", obj_type="crs")
+    monkeypatch.setattr(
+        mcp_server, "_get_client", lambda: _FakeListingClient(list_my_courses=[node])
+    )
+
+    result = mcp_server.list_courses()
+
+    assert result == [
+        {"ref_id": "1", "title": "Kurs A", "url": "https://x/1", "obj_type": "crs", "description": None}
+    ]
+
+
+def test_list_container_tool_serializes_nodes(monkeypatch):
+    from ilias_mcp.ilias.models import Node
+
+    node = Node(ref_id="2", title="Folien", url="https://x/2", obj_type="fold")
+    monkeypatch.setattr(mcp_server, "_get_client", lambda: _FakeListingClient(list_container=[node]))
+
+    result = mcp_server.list_container("2")
+
+    assert result[0]["ref_id"] == "2"
+    assert result[0]["obj_type"] == "fold"
+
+
+def test_list_forum_threads_tool_passes_through(monkeypatch):
+    threads = [{"thread_id": "9", "title": "Klausurtermin", "url": "https://x", "last_update": "23.08.2026"}]
+    monkeypatch.setattr(
+        mcp_server, "_get_client", lambda: _FakeListingClient(list_forum_threads=threads)
+    )
+
+    assert mcp_server.list_forum_threads("2905709") == threads
+
+
+def test_read_forum_thread_tool_passes_through(monkeypatch):
+    posts = [{"author": "Prof.", "content": "..."}]
+    monkeypatch.setattr(
+        mcp_server, "_get_client", lambda: _FakeListingClient(read_forum_thread=posts)
+    )
+
+    assert mcp_server.read_forum_thread("https://x/thread") == posts

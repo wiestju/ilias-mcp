@@ -16,11 +16,12 @@ mcp = MCPServer(
     instructions=(
         "Tools for browsing and downloading course materials from ILIAS — a "
         "learning-management/e-learning platform used by many German and other "
-        "European universities for lecture slides, exercises, and course "
-        "structure. Relevant whenever the user asks about their university "
-        "courses or coursework (lecture materials, exam prep, assignments, "
-        "\"what did the professor say about X\"), even if they don't say "
-        "'ILIAS' explicitly — not a general web browser or search tool. "
+        "European universities for lecture slides, exercises, course "
+        "structure, and forum-based announcements. Relevant whenever the "
+        "user asks about their university courses or coursework (lecture "
+        "materials, exam prep, assignments, \"what did the professor "
+        "announce/say about X\"), even if they don't say 'ILIAS' explicitly "
+        "— not a general web browser or search tool. "
         "Scoped to a single, pre-configured ILIAS instance (one university, "
         "set via ILIAS_PROVIDER — see 'ilias-mcp providers' for what's "
         "registered). Login happens lazily on first tool call, using "
@@ -54,6 +55,24 @@ def list_container(ref_id: str) -> list[dict]:
     repository container, identified by its ref_id (as returned by
     list_courses/list_container itself)."""
     return [asdict(node) for node in _get_client().list_container(ref_id)]
+
+
+@mcp.tool()
+def list_forum_threads(ref_id: str) -> list[dict]:
+    """List the threads in an ILIAS forum, identified by its ref_id (an item
+    with obj_type "frm" from list_container). There's no separate
+    "announcements" tool — a course's announcements are just a forum, often
+    literally titled "Announcements" or "Organisatorisch" — find it via
+    list_container first. Each thread includes a `url`; pass that to
+    read_forum_thread to read its posts."""
+    return _get_client().list_forum_threads(ref_id)
+
+
+@mcp.tool()
+def read_forum_thread(thread_url: str) -> list[dict]:
+    """Read the posts in a forum thread, given the `url` field from one of
+    list_forum_threads' results (not a ref_id)."""
+    return _get_client().read_forum_thread(thread_url)
 
 
 @mcp.tool()

@@ -140,3 +140,114 @@ def parse_repository_items(html: str, base_url: str) -> list[Node]:
         )
 
     return list(nodes.values())
+
+
+def parse_info_properties(html: str) -> dict[str, str]:
+    """Parse the label/value property pairs off an ILIAS object's Info
+    screen (``ilInfoScreenGUI&cmd=showSummary``).
+
+    This page exists for every ILIAS object type (file, exercise, test,
+    course, ...) and is purely informational — a safe, read-only way to see
+    e.g. an exercise's deadline without going anywhere near submission/edit
+    endpoints. Markup confirmed live against a real file object's info
+    screen on 2026-08-14:
+        <div class="form-group row">
+          <div class="il_InfoScreenProperty ...">Label</div>
+          <div class="il_InfoScreenPropertyValue ...">Value</div>
+        </div>
+    """
+    soup = BeautifulSoup(html, "lxml")
+    properties: dict[str, str] = {}
+    for label in soup.select(".il_InfoScreenProperty"):
+        value = label.find_next_sibling(class_="il_InfoScreenPropertyValue")
+        key = label.get_text(strip=True)
+        if not key or value is None:
+            continue
+        properties[key] = value.get_text(" ", strip=True)
+    return properties
+
+
+_THR_PK_RE = re.compile(r"thr_pk=(\d+)")
+
+
+def parse_forum_threads(html: str, base_url: str) -> list[dict[str, str | None]]:
+    """Parse the thread list off an ILIAS forum page (``ilObjForumGUI&cmd=view``).
+
+    The empty-state table (a single "Keine Einträge" row) is confirmed live
+    against a real KIT forum (2026-08-23). The actual thread-row markup below
+    is still a best-effort guess at ILIAS's standard table-row conventions,
+    not independently verified — none of the forums available to verify
+    against had any threads. If this returns nothing for a forum you know
+    has threads, rerun with ILIAS_MCP_DEBUG_DUMP=1 and fix the row-parsing
+    below.
+    """
+    soup = BeautifulSoup(html, "lxml")
+    table = soup.select_one("table[id^='recf_']")
+    if table is None:
+        raise ParseError(
+            "Could not find the forum thread table on this page. Rerun with "
+            "ILIAS_MCP_DEBUG_DUMP=1 and check parse_forum_threads in "
+            "ilias_mcp/ilias/parsing.py."
+        )
+
+    threads: list[dict[str, str | None]] = []
+    for row in table.select("tbody tr"):
+        cells = row.find_all("td")
+        if len(cells) <= 1:
+            continue  # "Keine Einträge" placeholder row
+        link = row.find("a", href=True)
+        if link is None:
+            continue
+        full_url = urljoin(base_url + "/", link["href"])
+        thr_match = _THR_PK_RE.search(full_url)
+        threads.append(
+            {
+                "thread_id": thr_match.group(1) if thr_match else None,
+                "title": link.get_text(strip=True),
+                "url": full_url,
+                "last_update": cells[-1].get_text(strip=True),
+            }
+        )
+    return threads
+
+
+_POST_SELECTORS = (".ilFrmPostRow", ".forumPostRow", ".il-forum-post")
+
+
+def parse_forum_posts(html: str) -> list[dict[str, str | None]]:
+    """Parse individual posts out of an ILIAS forum thread page (``cmd=viewThread``).
+
+    UNVERIFIED against real data — no populated thread was available in the
+    account this was built against (see parse_forum_threads). Rerun with
+    ILIAS_MCP_DEBUG_DUMP=1 against a real thread and fix the selectors here
+    if this raises ParseError or returns nonsense on your ILIAS instance.
+    """
+    soup = BeautifulSoup(html, "lxml")
+
+    rows = []
+    for selector in _POST_SELECTORS:
+        rows = soup.select(selector)
+        if rows:
+            break
+
+    if not rows:
+        raise ParseError(
+            "Could not find any forum posts on this page using the known "
+            "(unverified) selectors. Rerun with ILIAS_MCP_DEBUG_DUMP=1 and "
+            "update parse_forum_posts in ilias_mcp/ilias/parsing.py to match "
+            "the real markup."
+        )
+
+    posts: list[dict[str, str | None]] = []
+    for row in rows:
+        author = row.select_one(".ilFrmPostTitle, .il-post-author, .ilForumPostTitle")
+        content = row.select_one(".ilFrmPostContent, .il-post-content, .ilForumPostContent")
+        posts.append(
+            {
+                "author": author.get_text(strip=True) if author else None,
+                "content": content.get_text("\n", strip=True)
+                if content
+                else row.get_text("\n", strip=True),
+            }
+        )
+    return posts
