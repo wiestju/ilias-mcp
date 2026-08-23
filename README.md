@@ -26,8 +26,19 @@ Roadmap, in priority order (see `.env.example` to get logged in):
 
 1. ~~Course/folder tree listing~~ — done, live-verified.
 2. ~~File download~~ — done, live-verified.
-3. Announcements/news per course — not started.
-4. Exercises/assignments (deadlines, submission status) — not started.
+3. ~~Announcements/news per course~~ — done as generic forum reading
+   (`list_forum_threads`/`read_forum_thread`); there's no separate
+   "announcements" object type in ILIAS, a course's announcements are just
+   a forum. Empty-forum state confirmed live (2026-08-23); the populated
+   thread-row/post markup is still best-effort/unverified — none of the
+   forums available to test against had any threads yet.
+4. ~~Exercises/assignments~~ — done, read-only by design (no submit/upload
+   tool exists or is planned). `list_exercise_assignments` returns each
+   assignment's title, status, deadline, last submission date, submission
+   type, and grading status; uses `mode=all` rather than the page's own
+   default (ongoing-only), which would hide a past semester's finished
+   assignments entirely. Both the empty and populated states are
+   live-verified (2026-08-23, ref_id 2911807, "Numerische Mathematik").
 
 Known gaps:
 
@@ -35,6 +46,19 @@ Known gaps:
   options in the markup, but the login flow only drives the plain
   username/password path. Will need real-world testing against an
   MFA-enabled account to implement.
+- ILIAS object types beyond files/folders/forums/exercises aren't readable
+  yet: Learning Modules (`lm`) and Content Pages (`copa`) hold real text
+  content directly in ILIAS (not a downloadable file) but only their title
+  is currently surfaced via `list_container`; Opencast recordings (`xoct`)
+  aren't accessible at all (deliberately not planned — see discussion,
+  low value without a transcription pipeline).
+- A generic "read any object's Info screen" tool (deadlines, file size,
+  etc. — `ilInfoScreenGUI`) was attempted and reverted: ILIAS validates the
+  `cmdNode` routing parameter server-side, and it can't be constructed
+  from a bare ref_id without having actually navigated there first, so a
+  direct URL 500s. `ilias_mcp/ilias/parsing.py`'s `parse_info_properties`
+  is implemented and tested against real markup, just not wired to a
+  reachable client method yet.
 
 `list_my_courses()` (CLI: `courses`, MCP tool: `list_courses`) returns the
 full membership overview (`ilMembershipOverviewGUI`) by default — every
@@ -67,11 +91,37 @@ Run the test suite with `pytest`.
 
 Point your MCP client at `ilias-mcp-server` (installed console script) or
 `python -m ilias_mcp.mcp_server`, stdio transport. Exposed tools:
-`list_courses`, `list_container(ref_id)`, `download_file(ref_id)`. Login
-happens lazily on first tool call.
+`list_courses`, `list_container(ref_id)`, `download_file(ref_id)`,
+`read_file(ref_id)` (PDF text, page by page), `read_file_images(ref_id,
+pages=None)` (PDF pages as images, for diagrams/layout — call `read_file`
+first and only reach for this on the specific pages that need it),
+`list_forum_threads(ref_id)` and `read_forum_thread(url)` (a course's
+announcements are just a forum — find it via `list_container`, there's no
+separate announcements type), `list_exercise_assignments(ref_id)`
+(deadlines, submission status, grading status per assignment — read-only,
+no submit/upload tool). Login happens lazily on first tool call, and transparently
+re-authenticates if the ILIAS session times out mid-chat.
 
-For Claude Code, add it as an MCP server pointing at the
-`ilias-mcp-server` executable inside `.venv/bin/`.
+**Credentials:** run `ilias-mcp init` once to store your login in the OS
+keyring (macOS Keychain / Windows Credential Manager / Linux Secret
+Service) instead of a plaintext file — recommended for a real university
+password, which (unlike a scoped API key) can't be revoked or rate-limited
+if it leaks. `.env` still works as a fallback (see Quickstart above).
+
+**Registering the server itself**, per client — each command edits that
+client's own config file in place (backing up the previous version first,
+and doing nothing if already configured), no manual JSON/TOML editing:
+
+```bash
+ilias-mcp setup claude-desktop   # ~/Library/Application Support/Claude/claude_desktop_config.json
+ilias-mcp setup codex            # ~/.codex/config.toml (Codex, inside the ChatGPT desktop app)
+ilias-mcp setup cursor           # ~/.cursor/mcp.json
+ilias-mcp setup windsurf         # ~/.codeium/windsurf/mcp_config.json
+```
+
+Restart the app afterwards. Any other MCP-compatible client can be wired
+up the same way manually: point it at the `ilias-mcp-server` executable
+inside this project's `.venv/bin/`, stdio transport.
 
 ## Architecture
 
