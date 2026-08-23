@@ -82,6 +82,19 @@ def test_read_file_images_out_of_range_page_raises(monkeypatch, fake_pdf):
         mcp_server.read_file_images("123", pages="99")
 
 
+def test_read_file_images_caps_at_max_pages_per_call(monkeypatch, tmp_path):
+    long_pdf = tmp_path / "long.pdf"
+    _make_test_pdf(long_pdf, [f"page {i}" for i in range(25)])
+    monkeypatch.setattr(mcp_server, "_get_client", lambda: _FakeClient(long_pdf))
+
+    with pytest.raises(ValueError, match="capped at 20"):
+        mcp_server.read_file_images("123")
+
+    # A narrowed range under the cap still works.
+    images = mcp_server.read_file_images("123", pages="1-20")
+    assert len(images) == 20
+
+
 def test_read_file_images_rejects_non_pdf(monkeypatch, tmp_path):
     txt_path = tmp_path / "notes.txt"
     txt_path.write_text("plain text")

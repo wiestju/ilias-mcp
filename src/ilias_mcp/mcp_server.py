@@ -141,6 +141,14 @@ def read_file(ref_id: str) -> str:
             )
 
 
+# Claude Desktop/claude.ai reject a turn with more than 20 image blocks
+# outright; the API allows more, but this server has no way to know which
+# client is asking. Cap here with a clear error rather than letting a wide
+# `pages` spec (or an omitted one, on a long document) fail opaquely on
+# the client side.
+_MAX_IMAGE_PAGES = 20
+
+
 @mcp.tool(structured_output=False)
 def read_file_images(ref_id: str, pages: str | None = None) -> list[Image]:
     """Download an ILIAS PDF by ref_id and return specific pages as images,
@@ -152,14 +160,23 @@ def read_file_images(ref_id: str, pages: str | None = None) -> list[Image]:
     this tool for the specific pages where the text wasn't enough (e.g. a
     diagram, table, or scanned page) — pass those via `pages`, e.g. "10",
     "10-13", or "3,7,10-12" (1-based, comma-separated, ranges with a
-    dash). Omit `pages` only if you deliberately need the whole document.
-    The file is downloaded to a temporary location and deleted again
-    immediately after rendering, leaving nothing on disk."""
+    dash). Capped at 20 pages per call (Claude Desktop/claude.ai reject
+    more images than that in one turn); call this multiple times with
+    different `pages` for a longer document rather than omitting `pages`
+    on one you haven't checked the length of. The file is downloaded to a
+    temporary location and deleted again immediately after rendering,
+    leaving nothing on disk."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         path = _get_client().download_file(ref_id, Path(tmp_dir))
         _require_pdf(path, "read_file_images")
         with pymupdf.open(str(path)) as doc:
             page_indices = _parse_page_spec(pages, doc.page_count) if pages else range(doc.page_count)
+            if len(page_indices) > _MAX_IMAGE_PAGES:
+                raise ValueError(
+                    f"{len(page_indices)} pages requested, but read_file_images is capped at "
+                    f"{_MAX_IMAGE_PAGES} per call (Claude Desktop/claude.ai reject more images "
+                    "than that in one turn). Narrow `pages` and call again for the rest."
+                )
             return [
                 Image(data=doc[i].get_pixmap(dpi=150).tobytes("png"), format="png")
                 for i in page_indices
