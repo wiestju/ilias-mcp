@@ -186,9 +186,12 @@ def parse_exercise_overview(html: str) -> list[dict[str, str | None]]:
       translated to English keys via ``_PROPERTY_NAME_TRANSLATIONS``
       (``deadline``, ``last_submission_date``, ``submission_type``,
       ``grading_status``, ...).
-    - Empty: a ``.panel-body`` containing an ``.alert-info`` box with
-      "Keine Übungseinheiten vorhanden." — this wrapper is only present
-      in the empty state, not around populated results.
+    - Empty: a ``.panel-body`` containing an ``.alert-info`` box (Bootstrap's
+      info-style alert, only present in this empty state, not around
+      populated results). Detected by presence, not by matching its text
+      ("Keine Übungseinheiten vorhanden." in German) — the ILIAS UI
+      language is a per-account setting, not fixed to German just because
+      a standard KIT account defaults to it.
     """
     soup = BeautifulSoup(html, "lxml")
 
@@ -218,8 +221,12 @@ def parse_exercise_overview(html: str) -> list[dict[str, str | None]]:
     if assignments:
         return assignments
 
-    empty_state = soup.select_one(".panel-body .alert-info")
-    if empty_state and "keine" in empty_state.get_text(strip=True).lower():
+    # Presence of the info-style alert box (Bootstrap's convention for
+    # informational messages, as opposed to `.alert-danger` for errors) is
+    # itself the signal — not matching its text, which would only match
+    # ILIAS's German "Keine Übungseinheiten vorhanden." and break under any
+    # other ILIAS UI language (a per-account setting, not KIT-specific).
+    if soup.select_one(".panel-body .alert-info") is not None:
         return []
 
     raise ParseError(

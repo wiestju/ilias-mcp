@@ -206,6 +206,19 @@ def test_parse_exercise_overview_empty_state_confirmed_live():
     assert parse_exercise_overview(html) == []
 
 
+def test_parse_exercise_overview_empty_state_is_language_independent():
+    # Same structural markup, English UI text instead of German — the ILIAS
+    # UI language is a per-account setting; detection must not depend on
+    # matching the German wording.
+    html = """
+    <div class="panel-body">
+      <div class="alert alert-info" role="status">No exercise units available.</div>
+    </div>
+    """
+
+    assert parse_exercise_overview(html) == []
+
+
 def test_parse_exercise_overview_raises_when_panel_missing():
     with pytest.raises(ParseError):
         parse_exercise_overview("<html><body>not an exercise page</body></html>")
