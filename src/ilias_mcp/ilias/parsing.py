@@ -144,6 +144,27 @@ def parse_repository_items(html: str, base_url: str) -> list[Node]:
 
 _ASS_ID_RE = re.compile(r"ass_id=(\d+)")
 
+# ILIAS's own property labels are German (KIT's UI language) and
+# inconsistent about it — "Type"/"Status" are already English loanwords,
+# "Beendet am"/"Anforderung"/"Datum der letzten Abgabe" aren't. Normalized
+# to English dict keys here so the *shape* of what this returns is
+# consistent and language-independent, matching the rest of the codebase's
+# API surface (Node's fields, etc.). The *values* are left untranslated —
+# they're free-text/dates straight from ILIAS's configured UI language,
+# and hardcoding a translation table for those would silently misrepresent
+# an account with a different ILIAS UI language than German. An
+# unrecognized label (ILIAS adds a new property, or shows one only for a
+# state other than "Beendet", which is all that was available to verify
+# against) falls through with its original German key rather than being
+# dropped, so nothing silently disappears.
+_PROPERTY_NAME_TRANSLATIONS = {
+    "Beendet am": "deadline",
+    "Anforderung": "requirement",
+    "Datum der letzten Abgabe": "last_submission_date",
+    "Type": "submission_type",
+    "Status": "grading_status",
+}
+
 
 def parse_exercise_overview(html: str) -> list[dict[str, str | None]]:
     """Parse the assignment list off an ILIAS exercise overview page
@@ -161,8 +182,10 @@ def parse_exercise_overview(html: str) -> list[dict[str, str | None]]:
       ``.il-std-item`` qualifier matters — bare ``.il-item`` also matches
       unrelated page chrome like the notification-bell widget) with a
       ``.il-item-title a`` (title + ``ass_id=<id>`` in its href) and
-      ``.il-item-property-name``/``.il-item-property-value`` span pairs
-      (deadline, last submission date, type, grading status, ...).
+      ``.il-item-property-name``/``.il-item-property-value`` span pairs,
+      translated to English keys via ``_PROPERTY_NAME_TRANSLATIONS``
+      (``deadline``, ``last_submission_date``, ``submission_type``,
+      ``grading_status``, ...).
     - Empty: a ``.panel-body`` containing an ``.alert-info`` box with
       "Keine Übungseinheiten vorhanden." — this wrapper is only present
       in the empty state, not around populated results.
@@ -175,18 +198,21 @@ def parse_exercise_overview(html: str) -> list[dict[str, str | None]]:
         if title_link is None:
             continue
         ass_id_match = _ASS_ID_RE.search(title_link.get("href", ""))
-        status_col = item.select_one(".col-sm-3")
+        state_col = item.select_one(".col-sm-3")
         assignment: dict[str, str | None] = {
             "assignment_id": ass_id_match.group(1) if ass_id_match else None,
             "title": title_link.get_text(strip=True),
-            "status": status_col.get_text(strip=True) if status_col else None,
+            # Temporal state (Beendet/Läuft/Kommend, i.e. which of the
+            # Laufende/Kommende/Vergangene tabs this belongs to) — distinct
+            # from the "grading_status" property below (graded or not).
+            "state": state_col.get_text(strip=True) if state_col else None,
         }
         names = item.select(".il-item-property-name")
         values = item.select(".il-item-property-value")
         for name_el, value_el in zip(names, values, strict=False):
             key = name_el.get_text(strip=True)
             if key:
-                assignment[key] = value_el.get_text(strip=True)
+                assignment[_PROPERTY_NAME_TRANSLATIONS.get(key, key)] = value_el.get_text(strip=True)
         assignments.append(assignment)
 
     if assignments:

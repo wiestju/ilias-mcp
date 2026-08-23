@@ -71,7 +71,9 @@ def list_forum_threads(ref_id: str) -> list[dict]:
 @mcp.tool()
 def read_forum_thread(thread_url: str) -> list[dict]:
     """Read the posts in a forum thread, given the `url` field from one of
-    list_forum_threads' results (not a ref_id)."""
+    list_forum_threads' results (not a ref_id). Note posts may name their
+    author and can be written by other students, not just staff — be
+    mindful before quoting or forwarding a post's content elsewhere."""
     return _get_client().read_forum_thread(thread_url)
 
 
@@ -81,10 +83,12 @@ def list_exercise_assignments(ref_id: str) -> list[dict]:
     obj_type "exc" from list_container), read-only — no submission/upload
     support by design, this can only look, never turn anything in on the
     user's behalf. Includes past/finished assignments, not just current
-    ones. Each entry has a title, status ("Beendet"/"Läuft"/...), and
-    whatever properties ILIAS shows for it — commonly a deadline
-    ("Beendet am"), last submission date ("Datum der letzten Abgabe"),
-    submission type, and grading status."""
+    ones. Each entry has assignment_id, title, state (ILIAS's own text,
+    e.g. "Beendet"/"Läuft" — which of the Laufende/Kommende/Vergangene
+    tabs it's in), and whatever properties ILIAS shows for it — commonly
+    deadline, last_submission_date, submission_type, and grading_status.
+    Dict keys are English; values are passed through as ILIAS's UI
+    language returns them (German for a standard KIT account)."""
     return _get_client().list_exercise_assignments(ref_id)
 
 

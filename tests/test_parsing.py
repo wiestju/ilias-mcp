@@ -259,11 +259,33 @@ def test_parse_exercise_overview_parses_populated_assignments():
         {
             "assignment_id": "105632",
             "title": "1. Übungsblatt",
-            "status": "Beendet",
-            "Beendet am": "8. Mai 2026, 09:45",
-            "Anforderung": "Verpflichtend",
-            "Datum der letzten Abgabe": "Bisher keine Abgabe",
-            "Type": "Datei",
-            "Status": "Nicht bewertet",
+            "state": "Beendet",
+            "deadline": "8. Mai 2026, 09:45",
+            "requirement": "Verpflichtend",
+            "last_submission_date": "Bisher keine Abgabe",
+            "submission_type": "Datei",
+            "grading_status": "Nicht bewertet",
         }
     ]
+
+
+def test_parse_exercise_overview_keeps_unrecognized_property_labels_as_is():
+    # An unknown property label (not in _PROPERTY_NAME_TRANSLATIONS) should
+    # fall through with its original key rather than being dropped.
+    html = """
+    <div class="il-item il-std-item">
+      <div class="row">
+        <div class="col-sm-3">Läuft</div>
+        <div class="col-sm-9">
+          <h4 class="il-item-title"><a href="ilias.php?ass_id=1">2. Blatt</a></h4>
+          <div class="row">
+            <div class="col-md-6"><span class="il-item-property-name">Irgendein neues Feld</span><span class="il-item-property-value">Wert</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    """
+
+    assignments = parse_exercise_overview(html)
+
+    assert assignments[0]["Irgendein neues Feld"] == "Wert"

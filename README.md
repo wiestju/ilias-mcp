@@ -34,8 +34,10 @@ Roadmap, in priority order (see `.env.example` to get logged in):
    forums available to test against had any threads yet.
 4. ~~Exercises/assignments~~ — done, read-only by design (no submit/upload
    tool exists or is planned). `list_exercise_assignments` returns each
-   assignment's title, status, deadline, last submission date, submission
-   type, and grading status; uses `mode=all` rather than the page's own
+   assignment's title, state, deadline, last submission date, submission
+   type, and grading status (English dict keys; values pass through
+   ILIAS's own UI-language text, German for a standard KIT account); uses
+   `mode=all` rather than the page's own
    default (ongoing-only), which would hide a past semester's finished
    assignments entirely. Both the empty and populated states are
    live-verified (2026-08-23, ref_id 2911807, "Numerische Mathematik").
@@ -94,7 +96,9 @@ Point your MCP client at `ilias-mcp-server` (installed console script) or
 `list_courses`, `list_container(ref_id)`, `download_file(ref_id)`,
 `read_file(ref_id)` (PDF text, page by page), `read_file_images(ref_id,
 pages=None)` (PDF pages as images, for diagrams/layout — call `read_file`
-first and only reach for this on the specific pages that need it),
+first and only reach for this on the specific pages that need it; capped
+at 20 pages per call, since Claude Desktop/claude.ai reject a turn with
+more images than that),
 `list_forum_threads(ref_id)` and `read_forum_thread(url)` (a course's
 announcements are just a forum — find it via `list_container`, there's no
 separate announcements type), `list_exercise_assignments(ref_id)`
