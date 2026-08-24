@@ -25,3 +25,10 @@ class ParseError(IliasMcpError):
     installations, and callers may want to react differently (e.g. dump HTML
     for debugging) than to a generic error.
     """
+
+
+class DownloadError(IliasMcpError):
+    """Raised when a file download returns something other than the file
+    (observed live: an HTML page instead of binary content) even after a
+    forced re-login retry — most often a transient session/server hiccup
+    rather than a real file-not-found."""

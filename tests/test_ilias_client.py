@@ -1,7 +1,7 @@
 import pytest
 import responses
 
-from ilias_mcp.exceptions import ParseError
+from ilias_mcp.exceptions import DownloadError, ParseError
 from ilias_mcp.ilias.client import ILIASClient
 from ilias_mcp.providers.kit import KITProvider
 
@@ -122,14 +122,18 @@ def test_list_my_courses_reraises_if_reauth_does_not_fix_it():
 
 
 @responses.activate
-def test_list_my_courses_does_not_reauth_when_session_still_valid():
+def test_list_my_courses_retries_even_when_is_logged_in_says_fine():
+    # is_logged_in() isn't trustworthy as a gate for reacting to an already
+    # -observed failure (see _force_relogin's docstring) — a ParseError
+    # forces exactly one relogin+retry regardless of what it reports.
     client, provider = _client_with_expired_session(initially_logged_in=True)
     responses.add(responses.GET, f"{BASE}/ilias.php", body=_NO_ITEMS_HTML, status=200)
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_ITEM_HTML, status=200)
 
-    with pytest.raises(ParseError):
-        client.list_my_courses()
+    nodes = client.list_my_courses()
 
-    assert provider.login_calls == 0  # a real markup issue, not session expiry
+    assert provider.login_calls == 1
+    assert len(nodes) == 1
 
 
 @responses.activate
@@ -183,3 +187,57 @@ def test_list_exercise_assignments_reauths_on_expired_session():
 
     assert provider.login_calls == 1
     assert assignments == []
+
+
+@responses.activate
+def test_download_file_retries_once_on_html_response(tmp_path):
+    # is_logged_in()==True here on purpose: this reproduces a real, live
+    # incident (2026-08-24) where a download briefly returned an HTML page
+    # instead of the file even though the session looked valid — the
+    # proactive is_logged_in() check alone would have missed this.
+    client, provider = _client_with_expired_session(initially_logged_in=True)
+    responses.add(
+        responses.GET,
+        f"{BASE}/goto.php/file/42/download",
+        body="<html>not the file</html>",
+        status=200,
+        content_type="text/html",
+    )
+    responses.add(
+        responses.GET,
+        f"{BASE}/goto.php/file/42/download",
+        body=b"%PDF-1.4 fake pdf bytes",
+        status=200,
+        content_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="real.pdf"'},
+    )
+
+    path = client.download_file("42", tmp_path)
+
+    assert provider.login_calls == 1  # forced re-login despite is_logged_in() saying fine
+    assert path.name == "real.pdf"
+    assert path.read_bytes() == b"%PDF-1.4 fake pdf bytes"
+
+
+@responses.activate
+def test_download_file_raises_download_error_if_retry_also_fails(tmp_path):
+    client, provider = _client_with_expired_session(initially_logged_in=True)
+    responses.add(
+        responses.GET,
+        f"{BASE}/goto.php/file/42/download",
+        body="<html>still not the file</html>",
+        status=200,
+        content_type="text/html",
+    )
+    responses.add(
+        responses.GET,
+        f"{BASE}/goto.php/file/42/download",
+        body="<html>still not the file</html>",
+        status=200,
+        content_type="text/html",
+    )
+
+    with pytest.raises(DownloadError, match="Retried once"):
+        client.download_file("42", tmp_path)
+
+    assert provider.login_calls == 1  # retried exactly once, no infinite loop

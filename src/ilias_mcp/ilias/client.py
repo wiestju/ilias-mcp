@@ -6,7 +6,7 @@ from pathlib import Path
 
 import requests
 
-from ..exceptions import NotLoggedInError, ParseError
+from ..exceptions import DownloadError, NotLoggedInError, ParseError
 from ..providers.base import AuthProvider
 from .models import Node
 from .parsing import (
@@ -55,8 +55,34 @@ class ILIASClient:
 
     def _reauth_if_expired(self) -> bool:
         """Re-login with the original credentials if the ILIAS session has
-        silently expired. Returns True if a fresh login was performed."""
+        silently expired. Returns True if a fresh login was performed.
+
+        Only used as a *proactive* pre-check (before any failure has
+        happened), where paying for an extra is_logged_in() request to
+        avoid a needless re-login on the common happy path is worth it. For
+        *reacting* to an actual failure, use _force_relogin instead — see
+        its docstring for why the distinction matters.
+        """
         if self._credentials is None or self.provider.is_logged_in(self.session):
+            return False
+        self.provider.login(self.session, self._credentials)
+        return True
+
+    def _force_relogin(self) -> bool:
+        """Unconditionally re-login with the original credentials, without
+        consulting is_logged_in() first. Returns True if a login was
+        attempted (i.e. credentials were available), False otherwise.
+
+        Used to react to an already-observed failure (a ParseError, or a
+        download that returned HTML instead of a file) rather than to
+        proactively check before one has happened. is_logged_in() isn't
+        trustworthy as a *gate* here: observed live (2026-08-24) that it
+        can report the session as still valid during what turns out to be
+        a transient hiccup that a straightforward re-login and retry
+        recovers from — gating on it there meant never even attempting the
+        retry that would have fixed it.
+        """
+        if self._credentials is None:
             return False
         self.provider.login(self.session, self._credentials)
         return True
@@ -89,7 +115,7 @@ class ILIASClient:
             # A page we can't parse is most often a stale session landing on
             # ILIAS's login page instead of the expected listing — re-login
             # and retry once before treating it as a real markup change.
-            if self._reauth_if_expired():
+            if self._force_relogin():
                 return _fetch()
             raise
 
@@ -108,7 +134,7 @@ class ILIASClient:
         try:
             return _fetch()
         except ParseError:
-            if self._reauth_if_expired():
+            if self._force_relogin():
                 return _fetch()
             raise
 
@@ -120,19 +146,42 @@ class ILIASClient:
         KIT file object — no page-scraping needed for this step.
         """
         self._require_login()
-        # No parse step here to react to on failure (a stale session would
-        # silently save the login page's HTML as if it were the file), so
-        # check proactively instead.
+        # Proactive check first (catches the common case: session genuinely
+        # expired). Not sufficient on its own, though — observed live
+        # (2026-08-24): a download returned an HTML page instead of the file
+        # even though is_logged_in() reported the session as still valid
+        # (a transient hiccup, not a real logout). _attempt() below catches
+        # that directly by inspecting the response itself, and forces a
+        # fresh login on retry regardless of what is_logged_in() says.
         self._reauth_if_expired()
         dest_dir.mkdir(parents=True, exist_ok=True)
 
-        with self.session.get(f"{self.base_url}/goto.php/file/{ref_id}/download", stream=True) as resp:
-            resp.raise_for_status()
-            filename = _filename_from_response(resp) or f"ilias_file_{ref_id}"
-            dest_path = dest_dir / filename
-            with open(dest_path, "wb") as fh:
-                fh.writelines(resp.iter_content(chunk_size=64 * 1024))
-        return dest_path
+        def _attempt() -> Path:
+            with self.session.get(f"{self.base_url}/goto.php/file/{ref_id}/download", stream=True) as resp:
+                resp.raise_for_status()
+                if resp.headers.get("Content-Type", "").startswith("text/html"):
+                    raise DownloadError(
+                        f"Got an HTML page instead of file content for ref_id {ref_id}."
+                    )
+                filename = _filename_from_response(resp) or f"ilias_file_{ref_id}"
+                dest_path = dest_dir / filename
+                with open(dest_path, "wb") as fh:
+                    fh.writelines(resp.iter_content(chunk_size=64 * 1024))
+            return dest_path
+
+        try:
+            return _attempt()
+        except DownloadError:
+            if not self._force_relogin():
+                raise
+            try:
+                return _attempt()
+            except DownloadError as exc:
+                raise DownloadError(
+                    f"{exc} Retried once after a fresh login with the same result — "
+                    "this may be a real, temporary ILIAS/network issue rather than a "
+                    "session problem. Try again in a moment."
+                ) from exc
 
     def list_forum_threads(self, ref_id: str) -> list[dict[str, str | None]]:
         """List the threads in an ILIAS forum, identified by its ref_id.
@@ -155,7 +204,7 @@ class ILIASClient:
         try:
             return _fetch()
         except ParseError:
-            if self._reauth_if_expired():
+            if self._force_relogin():
                 return _fetch()
             raise
 
@@ -172,7 +221,7 @@ class ILIASClient:
         try:
             return _fetch()
         except ParseError:
-            if self._reauth_if_expired():
+            if self._force_relogin():
                 return _fetch()
             raise
 
@@ -204,6 +253,6 @@ class ILIASClient:
         try:
             return _fetch()
         except ParseError:
-            if self._reauth_if_expired():
+            if self._force_relogin():
                 return _fetch()
             raise
