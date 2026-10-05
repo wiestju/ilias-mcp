@@ -2,6 +2,7 @@ import pytest
 
 from ilias_mcp.exceptions import ParseError
 from ilias_mcp.ilias.parsing import (
+    parse_container_page_text,
     parse_exercise_overview,
     parse_forum_posts,
     parse_forum_threads,
@@ -68,6 +69,84 @@ def test_parse_repository_items_ignores_side_column_blocks():
     nodes = parse_repository_items(html, "https://ilias.example.edu")
 
     assert [(n.ref_id, n.title, n.obj_type) for n in nodes] == [("111", "Vorlesungen", "fold")]
+
+
+def test_parse_repository_items_reads_classic_list_description():
+    # Classic repository-list markup, confirmed against a real KIT course
+    # page on 2026-10-05: every item carries an .il_Description section,
+    # empty for items without a description.
+    html = """
+    <div class="ilContainerListItemOuter">
+      <h3 class="il_ContainerItemTitle"><a class="il_ContainerItemTitle" href="https://ilias.example.edu/goto.php/webr/1">Chat</a></h3>
+      <div class="ilListItemSection il_Description">Anonymer Chat zur Vorlesung.</div>
+    </div>
+    <div class="ilContainerListItemOuter">
+      <h3 class="il_ContainerItemTitle"><a class="il_ContainerItemTitle" href="https://ilias.example.edu/goto.php/fold/2">Vorlesungen</a></h3>
+      <div class="ilListItemSection il_Description"></div>
+    </div>
+    """
+
+    nodes = parse_repository_items(html, "https://ilias.example.edu")
+
+    assert {n.ref_id: n.description for n in nodes} == {
+        "1": "Anonymer Chat zur Vorlesung.",
+        "2": None,
+    }
+
+
+_CONTAINER_PAGE_HTML = """
+<div id="il_center_col">
+  <!--COPage-PageTop-->
+  <a id="ilPageShowAdvContent"><span>Vertiefungswissen anzeigen</span></a>
+  <div class="ilc_section_Separator ilCOPageSection">
+    <p class="ilc_Paragraph"><strong>Herzlich Willkommen</strong> zur <em>Vorlesung</em>.</p><!--Break-->
+    <p class="ilc_Paragraph">Mittwochs 08:00<br>im Audimax.</p>
+  </div>
+  <div class="ilc_va_cntr_AccordCntr">
+    <div class="ilc_va_ihead_AccordIHead"><div class="ilc_va_ihcap_AccordIHeadCap">Klausur</div></div>
+    <div class="il_VAccordionContentDef ilAccHideContent">
+      <p class="ilc_Paragraph">Anmeldung im <a href="https://portal.example.edu/x">Portal</a>, siehe <a href="goto.php/crs/42">Kurs</a>.</p>
+      <div class="ilc_Paragraph"><ul><li>Teil A (60%)</li><li>Teil B (40%)</li></ul></div>
+    </div>
+  </div>
+  <div class="ilContainerBlock"><h3 class="il_ContainerItemTitle"><a href="goto.php/fold/7">Vorlesungen</a></h3></div>
+  <div class="il-copg-mob-fullscreen-modal"><dialog>Vollbild Abbrechen</dialog></div>
+</div>
+<aside id="il_right_col">Sprechstunde</aside>
+"""
+
+
+def test_parse_container_page_text_renders_page_editor_content():
+    # Structure confirmed against a real KIT course page on 2026-10-05.
+    text = parse_container_page_text(_CONTAINER_PAGE_HTML, "https://ilias.example.edu")
+
+    assert text.splitlines() == [
+        "Herzlich Willkommen zur Vorlesung.",
+        "Mittwochs 08:00",
+        "im Audimax.",
+        "## Klausur",
+        (
+            "Anmeldung im Portal (https://portal.example.edu/x), siehe Kurs "
+            "(https://ilias.example.edu/goto.php/crs/42)."
+        ),
+        "- Teil A (60%)",
+        "- Teil B (40%)",
+    ]
+
+
+def test_parse_container_page_text_is_empty_without_page_content():
+    html = """
+    <div id="il_center_col">
+      <div class="ilContainerBlock"><a class="il_ContainerItemTitle" href="goto.php/fold/7">Vorlesungen</a></div>
+    </div>
+    """
+
+    assert parse_container_page_text(html, "https://ilias.example.edu") == ""
+
+
+def test_parse_container_page_text_raises_when_content_column_missing():
+    with pytest.raises(ParseError):
+        parse_container_page_text("<html><body>Login</body></html>", "https://ilias.example.edu")
 
 
 def test_parse_repository_items_raises_on_unknown_markup():

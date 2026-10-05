@@ -146,6 +146,9 @@ class _FakeListingClient:
     def list_container(self, ref_id):
         return self._results["list_container"]
 
+    def read_container_page(self, ref_id):
+        return self._results["read_container_page"]
+
     def list_forum_threads(self, ref_id):
         return self._results["list_forum_threads"]
 
@@ -181,6 +184,15 @@ def test_list_container_tool_serializes_nodes(monkeypatch):
 
     assert result[0]["ref_id"] == "2"
     assert result[0]["obj_type"] == "fold"
+
+
+def test_read_container_page_tool_passes_through(monkeypatch):
+    text = "Herzlich Willkommen\n## Klausur\nAm 25.08."
+    monkeypatch.setattr(
+        mcp_server, "_get_client", lambda: _FakeListingClient(read_container_page=text)
+    )
+
+    assert mcp_server.read_container_page("2") == text
 
 
 def test_list_forum_threads_tool_passes_through(monkeypatch):
