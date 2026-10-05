@@ -69,6 +69,16 @@ def _find_item_container(anchor: Tag) -> Tag | None:
     )
 
 
+def _in_side_column(anchor: Tag) -> bool:
+    # Side blocks (consultation hours, calendar, news, ...) reuse the same
+    # ".il-item-title" card markup as real repository items. Confirmed live
+    # on a KIT course page on 2026-10-05: a lecturer's consultation-hours
+    # block in the right column matched the first selector, so the course's
+    # actual contents (classic list style, center column) were never read
+    # and the listing came back as that single calendar link.
+    return anchor.find_parent(id="il_right_col") is not None
+
+
 def _find_icon(container: Tag | None) -> Tag | None:
     if container is None:
         return None
@@ -105,7 +115,7 @@ def parse_repository_items(html: str, base_url: str) -> list[Node]:
 
     anchors = []
     for selector in _ITEM_TITLE_SELECTORS:
-        anchors = soup.select(selector)
+        anchors = [a for a in soup.select(selector) if not _in_side_column(a)]
         if anchors:
             break
 

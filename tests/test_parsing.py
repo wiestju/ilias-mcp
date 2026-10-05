@@ -46,6 +46,30 @@ def test_parse_repository_items_handles_goto_permalinks_and_description():
     assert node.description == "Einführung in die Mensch-Maschine Interaktion."
 
 
+def test_parse_repository_items_ignores_side_column_blocks():
+    # Structure confirmed against a real KIT course page on 2026-10-05: a
+    # consultation-hours block in the right column uses the same card
+    # markup as the dashboard, and used to shadow the course's real
+    # contents in the center column.
+    html = """
+    <div id="il_center_col">
+      <div class="ilContainerListItemOuter">
+        <img class="ilListItemIcon" src="/templates/default/images/standard/icon_fold.svg" alt="Ordner">
+        <h3 class="il_ContainerItemTitle"><a class="il_ContainerItemTitle" href="https://ilias.example.edu/goto.php/fold/111">Vorlesungen</a></h3>
+      </div>
+    </div>
+    <aside id="il_right_col">
+      <div class="il-item il-std-item">
+        <h4 class="il-item-title"><a href="ilias.php?cmdClass=ilcalendarpresentationgui&ref_id=999&ch_user_id=1">Prof. Dr. Example</a></h4>
+      </div>
+    </aside>
+    """
+
+    nodes = parse_repository_items(html, "https://ilias.example.edu")
+
+    assert [(n.ref_id, n.title, n.obj_type) for n in nodes] == [("111", "Vorlesungen", "fold")]
+
+
 def test_parse_repository_items_raises_on_unknown_markup():
     with pytest.raises(ParseError):
         parse_repository_items("<html><body>nothing here</body></html>", "https://ilias.example.edu")
