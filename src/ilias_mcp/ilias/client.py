@@ -10,6 +10,7 @@ from ..exceptions import DownloadError, NotLoggedInError, ParseError
 from ..providers.base import AuthProvider
 from .models import Node
 from .parsing import (
+    parse_container_page_text,
     parse_exercise_overview,
     parse_forum_posts,
     parse_forum_threads,
@@ -130,6 +131,26 @@ class ILIASClient:
             )
             resp.raise_for_status()
             return parse_repository_items(resp.text, self.base_url)
+
+        try:
+            return _fetch()
+        except ParseError:
+            if self._force_relogin():
+                return _fetch()
+            raise
+
+    def read_container_page(self, ref_id: str) -> str:
+        """Return the authored page text a container (course, folder, ...)
+        shows above its item list, or an empty string if it has none."""
+        self._require_login()
+
+        def _fetch() -> str:
+            resp = self.session.get(
+                f"{self.base_url}/ilias.php",
+                params={"baseClass": "ilRepositoryGUI", "ref_id": ref_id, "cmd": "view"},
+            )
+            resp.raise_for_status()
+            return parse_container_page_text(resp.text, self.base_url)
 
         try:
             return _fetch()

@@ -136,6 +136,34 @@ def test_list_my_courses_retries_even_when_is_logged_in_says_fine():
     assert len(nodes) == 1
 
 
+_CONTAINER_PAGE_HTML = """
+<div id="il_center_col">
+  <p class="ilc_Paragraph">Herzlich Willkommen</p>
+  <div class="ilContainerBlock"><a class="il_ContainerItemTitle" href="goto.php/fold/7">Folien</a></div>
+</div>
+"""
+
+
+@responses.activate
+def test_read_container_page_returns_page_text():
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_CONTAINER_PAGE_HTML, status=200)
+    client = _logged_in_client()
+
+    assert client.read_container_page("2905699") == "Herzlich Willkommen"
+
+
+@responses.activate
+def test_read_container_page_reauths_on_expired_session():
+    client, provider = _client_with_expired_session(initially_logged_in=False)
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_NO_ITEMS_HTML, status=200)
+    responses.add(responses.GET, f"{BASE}/ilias.php", body=_CONTAINER_PAGE_HTML, status=200)
+
+    text = client.read_container_page("2905699")
+
+    assert provider.login_calls == 1
+    assert text == "Herzlich Willkommen"
+
+
 @responses.activate
 def test_list_forum_threads_parses_empty_forum():
     responses.add(responses.GET, f"{BASE}/ilias.php", body=_EMPTY_FORUM_HTML, status=200)

@@ -4,7 +4,7 @@ import re
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
-from bs4.element import Tag
+from bs4.element import NavigableString, Tag
 
 from ..exceptions import ParseError
 from .models import Node
@@ -100,8 +100,13 @@ def _icon_obj_type(icon: Tag | None) -> str | None:
 def _find_description(container: Tag | None) -> str | None:
     if container is None:
         return None
-    description = container.select_one(".il-item-description")
-    return description.get_text(strip=True) if description else None
+    # ".il-item-description" is the card style (dashboard/membership
+    # overview), ".il_Description" the classic repository-list style —
+    # confirmed live on a KIT course page on 2026-10-05, where the latter is
+    # always present but empty for items without a description.
+    description = container.select_one(".il-item-description, .il_Description")
+    text = description.get_text(" ", strip=True) if description else ""
+    return text or None
 
 
 def parse_repository_items(html: str, base_url: str) -> list[Node]:
@@ -150,6 +155,82 @@ def parse_repository_items(html: str, base_url: str) -> list[Node]:
         )
 
     return list(nodes.values())
+
+
+# Everything in the center column that isn't the page's own authored text:
+# the item list itself (list_container's job), the media fullscreen modal,
+# and the "show advanced content" toggle.
+_PAGE_TEXT_EXCLUDE_SELECTOR = (
+    ".ilContainerBlock, .il-copg-mob-fullscreen-modal, dialog, "
+    "#ilPageShowAdvContent, script, style"
+)
+_BLOCK_TAGS = frozenset(
+    {"p", "div", "ul", "ol", "li", "table", "tr", "figure", "section", "blockquote"}
+    | {f"h{level}" for level in range(1, 7)}
+)
+_HEADING_TAGS = frozenset(f"h{level}" for level in range(1, 7))
+_ACCORDION_HEAD_CLASS = "ilc_va_ihcap_AccordIHeadCap"
+
+
+def _render_text(node: Tag, base_url: str, out: list[str]) -> None:
+    for child in node.children:
+        if isinstance(child, NavigableString):
+            # Exact type only: ILIAS's page editor leaves marker comments
+            # ("<!--Break-->", "<!--COPage-PageTop-->") between blocks, and
+            # Comment is a NavigableString subclass.
+            if type(child) is NavigableString:
+                out.append(str(child))
+            continue
+        if not isinstance(child, Tag):
+            continue
+        if child.name == "br":
+            out.append("\n")
+            continue
+        is_heading = child.name in _HEADING_TAGS or _ACCORDION_HEAD_CLASS in child.get(
+            "class", []
+        )
+        is_block = child.name in _BLOCK_TAGS
+        if is_block:
+            out.append("\n")
+        if is_heading:
+            out.append("## ")
+        elif child.name == "li":
+            out.append("- ")
+        _render_text(child, base_url, out)
+        href = child.get("href") if child.name == "a" else None
+        if href and not href.startswith(("#", "javascript:")):
+            out.append(f" ({urljoin(base_url + '/', href)})")
+        if is_block:
+            out.append("\n")
+
+
+def parse_container_page_text(html: str, base_url: str) -> str:
+    """Extract the authored page text (welcome text, schedule, accordion
+    sections, ...) that a course/folder shows above its item list, as plain
+    text — one line per paragraph, accordion captions and headings prefixed
+    with "## ", list entries with "- ", link targets appended in parentheses.
+
+    Returns an empty string for a container without any such text. Markup
+    confirmed live against a real KIT course page on 2026-10-05: the
+    ILIAS page-editor content sits directly in ``#il_center_col``, next to
+    the ``.ilContainerBlock`` item lists, with accordion sections present
+    in the HTML even while collapsed.
+    """
+    soup = BeautifulSoup(html, "lxml")
+    center = soup.select_one("#il_center_col")
+    if center is None:
+        raise ParseError(
+            "Could not find the content column on this page. Rerun with "
+            "ILIAS_MCP_DEBUG_DUMP=1 and check parse_container_page_text in "
+            "ilias_mcp/ilias/parsing.py."
+        )
+    for unwanted in center.select(_PAGE_TEXT_EXCLUDE_SELECTOR):
+        unwanted.decompose()
+
+    parts: list[str] = []
+    _render_text(center, base_url, parts)
+    lines = (" ".join(line.split()) for line in "".join(parts).split("\n"))
+    return "\n".join(line for line in lines if line and line not in ("##", "-"))
 
 
 _ASS_ID_RE = re.compile(r"ass_id=(\d+)")

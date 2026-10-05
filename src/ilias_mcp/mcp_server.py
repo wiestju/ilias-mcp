@@ -53,8 +53,22 @@ def list_courses(favorites_only: bool = False) -> list[dict]:
 def list_container(ref_id: str) -> list[dict]:
     """List the direct children (folders, files, exercises, ...) of an ILIAS
     repository container, identified by its ref_id (as returned by
-    list_courses/list_container itself)."""
+    list_courses/list_container itself). Only the items are returned — the
+    text a course shows above them (welcome text, schedule, exam dates) is
+    available via read_container_page."""
     return [asdict(node) for node in _get_client().list_container(ref_id)]
+
+
+@mcp.tool()
+def read_container_page(ref_id: str) -> str:
+    """Read the text an ILIAS course or folder shows on its own page above
+    the item list — typically a welcome text, lecture times and rooms, exam
+    dates and registration periods, tutorial info — given the container's
+    ref_id (as for list_container). Collapsed accordion sections are
+    included, their captions marked with "## "; link targets follow the
+    link text in parentheses. Returns an empty string if the page has no
+    such text. Embedded images are not captured."""
+    return _get_client().read_container_page(ref_id)
 
 
 @mcp.tool()
