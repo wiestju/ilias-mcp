@@ -109,6 +109,24 @@ def _find_description(container: Tag | None) -> str | None:
     return text or None
 
 
+def _is_empty_container_view(soup: BeautifulSoup, base_url: str) -> bool:
+    # An empty folder renders no item block at all, just the container's
+    # "Inhalt" tab and an otherwise bare center column (at most the "show
+    # advanced content" toggle and media modal). Confirmed live on two empty
+    # KIT folders on 2026-11-06. The tab rules out ILIAS's login page, and
+    # requiring no repository links at all keeps a real markup change from
+    # being mistaken for an empty folder.
+    center = soup.select_one("#il_center_col")
+    if center is None or soup.select_one("#tab_view_content") is None:
+        return False
+    for unwanted in center.select(_PAGE_TEXT_EXCLUDE_SELECTOR):
+        unwanted.decompose()
+    return not any(
+        _extract_ref_id_and_type(urljoin(base_url + "/", a["href"]))[0]
+        for a in center.select("a[href]")
+    )
+
+
 def parse_repository_items(html: str, base_url: str) -> list[Node]:
     """Parse the item list out of an ILIAS repository/course/dashboard page.
 
@@ -125,6 +143,8 @@ def parse_repository_items(html: str, base_url: str) -> list[Node]:
             break
 
     if not anchors:
+        if _is_empty_container_view(soup, base_url):
+            return []
         raise ParseError(
             "Could not find any repository item titles in this page using the "
             "known selectors. ILIAS markup varies by version/theme — rerun with "
