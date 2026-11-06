@@ -154,6 +154,36 @@ def test_parse_repository_items_raises_on_unknown_markup():
         parse_repository_items("<html><body>nothing here</body></html>", "https://ilias.example.edu")
 
 
+def test_parse_repository_items_empty_folder_confirmed_live():
+    # Two empty KIT folders on 2026-11-06: the "Inhalt" tab, and a center
+    # column with only the advanced-content toggle and media modal.
+    html = """
+    <html><body>
+      <ul><li id="tab_view_content"><a href="#">Inhalt</a></li></ul>
+      <div id="il_center_col">
+        <div id="ilPageShowAdvContent"><a href="#">Vertiefungswissen anzeigen</a></div>
+        <div class="il-copg-mob-fullscreen-modal"><a href="#">Vollbild</a></div>
+      </div>
+    </body></html>
+    """
+
+    assert parse_repository_items(html, "https://ilias.example.edu") == []
+
+
+def test_parse_repository_items_raises_on_container_view_with_unknown_item_markup():
+    html = """
+    <html><body>
+      <ul><li id="tab_view_content"><a href="#">Inhalt</a></li></ul>
+      <div id="il_center_col">
+        <div class="some-new-list"><a href="goto.php/fold/7">Vorlesungen</a></div>
+      </div>
+    </body></html>
+    """
+
+    with pytest.raises(ParseError):
+        parse_repository_items(html, "https://ilias.example.edu")
+
+
 def test_parse_repository_items_infers_type_from_classic_list_icon():
     # Classic repository-list markup (contents of a course/folder), confirmed
     # against a real KIT course page on 2026-08-14 — links via a plain
