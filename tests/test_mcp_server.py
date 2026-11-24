@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pymupdf
 import pytest
+from mcp.server.mcpserver.exceptions import ToolError
 
 from ilias_mcp import mcp_server
 
@@ -49,13 +50,68 @@ def test_read_file_extracts_text_per_page(monkeypatch, fake_pdf):
     assert "Second page content" in text
 
 
-def test_read_file_rejects_non_pdf(monkeypatch, tmp_path):
+def test_read_file_rejects_unsupported_format(monkeypatch, tmp_path):
+    img_path = tmp_path / "photo.jpg"
+    img_path.write_bytes(b"\xff\xd8\xff not really a jpeg")
+    monkeypatch.setattr(mcp_server, "_get_client", lambda: _FakeClient(img_path))
+
+    with pytest.raises(ToolError, match="cannot read 'photo.jpg'"):
+        mcp_server.read_file("123")
+
+
+def test_read_file_returns_plain_text(monkeypatch, tmp_path):
     txt_path = tmp_path / "notes.txt"
     txt_path.write_text("plain text")
     monkeypatch.setattr(mcp_server, "_get_client", lambda: _FakeClient(txt_path))
 
-    with pytest.raises(ValueError, match="only supports PDF"):
-        mcp_server.read_file("123")
+    assert mcp_server.read_file("123") == "plain text"
+
+
+def test_read_file_reads_pdfs_and_text_inside_zip(monkeypatch, tmp_path, fake_pdf):
+    import zipfile
+
+    zip_path = tmp_path / "material.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.write(fake_pdf, "slides/lecture.pdf")
+        zf.writestr("readme.txt", "hello from the readme")
+        zf.writestr("agenda.xlsx", b"binary")
+        zf.writestr("__MACOSX/._lecture.pdf", b"junk")
+    monkeypatch.setattr(mcp_server, "_get_client", lambda: _FakeClient(zip_path))
+
+    text = mcp_server.read_file("123")
+
+    assert "3 files" in text
+    assert "===== slides/lecture.pdf (2 pages)" in text
+    assert "Vigenere" in text
+    assert "hello from the readme" in text
+    assert "agenda.xlsx (not read" in text
+    assert "__MACOSX" not in text
+
+
+def test_anticipated_errors_reach_the_model_as_tool_errors(monkeypatch):
+    from ilias_mcp.exceptions import DownloadError
+
+    class _Failing:
+        def download_file(self, ref_id, dest_dir):
+            raise DownloadError("Got an HTML page instead of file content for ref_id 1.")
+
+    monkeypatch.setattr(mcp_server, "_get_client", lambda: _Failing())
+
+    with pytest.raises(ToolError, match="HTML page instead"):
+        mcp_server.read_file("1")
+
+
+def test_list_container_on_a_file_explains_itself(monkeypatch):
+    from ilias_mcp.exceptions import ParseError
+
+    class _Failing:
+        def list_container(self, ref_id):
+            raise ParseError("no item list found")
+
+    monkeypatch.setattr(mcp_server, "_get_client", lambda: _Failing())
+
+    with pytest.raises(ToolError, match="use read_file or download_file"):
+        mcp_server.list_container("42")
 
 
 def test_read_file_images_defaults_to_all_pages(monkeypatch, fake_pdf):
@@ -78,7 +134,7 @@ def test_read_file_images_renders_only_requested_pages(monkeypatch, fake_pdf):
 def test_read_file_images_out_of_range_page_raises(monkeypatch, fake_pdf):
     monkeypatch.setattr(mcp_server, "_get_client", lambda: _FakeClient(fake_pdf))
 
-    with pytest.raises(ValueError, match="out of range"):
+    with pytest.raises(ToolError, match="out of range"):
         mcp_server.read_file_images("123", pages="99")
 
 
@@ -87,7 +143,7 @@ def test_read_file_images_caps_at_max_pages_per_call(monkeypatch, tmp_path):
     _make_test_pdf(long_pdf, [f"page {i}" for i in range(25)])
     monkeypatch.setattr(mcp_server, "_get_client", lambda: _FakeClient(long_pdf))
 
-    with pytest.raises(ValueError, match="capped at 20"):
+    with pytest.raises(ToolError, match="capped at 20"):
         mcp_server.read_file_images("123")
 
     # A narrowed range under the cap still works.
@@ -100,7 +156,7 @@ def test_read_file_images_rejects_non_pdf(monkeypatch, tmp_path):
     txt_path.write_text("plain text")
     monkeypatch.setattr(mcp_server, "_get_client", lambda: _FakeClient(txt_path))
 
-    with pytest.raises(ValueError, match="only supports PDF"):
+    with pytest.raises(ToolError, match="supported are PDF files"):
         mcp_server.read_file_images("123")
 
 
@@ -170,7 +226,13 @@ def test_list_courses_tool_serializes_nodes(monkeypatch):
     result = mcp_server.list_courses()
 
     assert result == [
-        {"ref_id": "1", "title": "Kurs A", "url": "https://x/1", "obj_type": "crs", "description": None}
+        {
+            "ref_id": "1",
+            "title": "Kurs A",
+            "url": "https://x/1",
+            "obj_type": "crs",
+            "description": None,
+        }
     ]
 
 
@@ -178,7 +240,9 @@ def test_list_container_tool_serializes_nodes(monkeypatch):
     from ilias_mcp.ilias.models import Node
 
     node = Node(ref_id="2", title="Folien", url="https://x/2", obj_type="fold")
-    monkeypatch.setattr(mcp_server, "_get_client", lambda: _FakeListingClient(list_container=[node]))
+    monkeypatch.setattr(
+        mcp_server, "_get_client", lambda: _FakeListingClient(list_container=[node])
+    )
 
     result = mcp_server.list_container("2")
 
@@ -196,7 +260,14 @@ def test_read_container_page_tool_passes_through(monkeypatch):
 
 
 def test_list_forum_threads_tool_passes_through(monkeypatch):
-    threads = [{"thread_id": "9", "title": "Klausurtermin", "url": "https://x", "last_update": "23.08.2026"}]
+    threads = [
+        {
+            "thread_id": "9",
+            "title": "Klausurtermin",
+            "url": "https://x",
+            "last_update": "23.08.2026",
+        }
+    ]
     monkeypatch.setattr(
         mcp_server, "_get_client", lambda: _FakeListingClient(list_forum_threads=threads)
     )
