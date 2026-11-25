@@ -1,15 +1,47 @@
 from __future__ import annotations
 
+import functools
 import tempfile
+import zipfile
+from collections.abc import Callable
 from dataclasses import asdict
 from pathlib import Path
+from typing import Any, TypeVar
 
 import pymupdf
+import requests
 from mcp.server.mcpserver import Image, MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 
 from .bootstrap import build_client
 from .config import Settings
+from .exceptions import IliasMcpError, ParseError
 from .ilias.client import ILIASClient
+
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+
+def _anticipated_errors(fn: _F) -> _F:
+    """Turn the failures we expect into ToolError so the model sees the message.
+
+    The MCP SDK treats every exception other than ToolError as a crash and
+    hands the client only "Error executing tool <name>", which hid useful
+    messages like "only supports PDF" or "session expired" from the model.
+    """
+
+    @functools.wraps(fn)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return fn(*args, **kwargs)
+        except ToolError:
+            raise
+        except (IliasMcpError, ValueError, zipfile.BadZipFile) as exc:
+            raise ToolError(str(exc)) from exc
+        except requests.HTTPError as exc:
+            raise ToolError(f"ILIAS returned an HTTP error: {exc}") from exc
+
+    return wrapper  # type: ignore[return-value]
+
 
 mcp = MCPServer(
     "ilias-mcp",
@@ -19,7 +51,7 @@ mcp = MCPServer(
         "European universities for lecture slides, exercises, course "
         "structure, and forum-based announcements. Relevant whenever the "
         "user asks about their university courses or coursework (lecture "
-        "materials, exam prep, assignments, \"what did the professor "
+        'materials, exam prep, assignments, "what did the professor '
         "announce/say about X\"), even if they don't say 'ILIAS' explicitly "
         "— not a general web browser or search tool. "
         "Scoped to a single, pre-configured ILIAS instance (one university, "
@@ -41,6 +73,7 @@ def _get_client() -> ILIASClient:
 
 
 @mcp.tool()
+@_anticipated_errors
 def list_courses(favorites_only: bool = False) -> list[dict]:
     """List the current user's ILIAS course/group memberships. By default
     returns every course/group the user belongs to; set favorites_only=True
@@ -50,16 +83,25 @@ def list_courses(favorites_only: bool = False) -> list[dict]:
 
 
 @mcp.tool()
+@_anticipated_errors
 def list_container(ref_id: str) -> list[dict]:
     """List the direct children (folders, files, exercises, ...) of an ILIAS
     repository container, identified by its ref_id (as returned by
     list_courses/list_container itself). Only the items are returned — the
     text a course shows above them (welcome text, schedule, exam dates) is
     available via read_container_page."""
-    return [asdict(node) for node in _get_client().list_container(ref_id)]
+    try:
+        nodes = _get_client().list_container(ref_id)
+    except ParseError as exc:
+        raise ToolError(
+            f"Could not list ref_id {ref_id} as a container ({exc}). If this ref_id is a "
+            "file (obj_type 'file' in the parent listing), use read_file or download_file instead."
+        ) from exc
+    return [asdict(node) for node in nodes]
 
 
 @mcp.tool()
+@_anticipated_errors
 def read_container_page(ref_id: str) -> str:
     """Read the text an ILIAS course or folder shows on its own page above
     the item list — typically a welcome text, lecture times and rooms, exam
@@ -72,6 +114,7 @@ def read_container_page(ref_id: str) -> str:
 
 
 @mcp.tool()
+@_anticipated_errors
 def list_forum_threads(ref_id: str) -> list[dict]:
     """List the threads in an ILIAS forum, identified by its ref_id (an item
     with obj_type "frm" from list_container). There's no separate
@@ -83,6 +126,7 @@ def list_forum_threads(ref_id: str) -> list[dict]:
 
 
 @mcp.tool()
+@_anticipated_errors
 def read_forum_thread(thread_url: str) -> list[dict]:
     """Read the posts in a forum thread, given the `url` field from one of
     list_forum_threads' results (not a ref_id). Note posts may name their
@@ -92,6 +136,7 @@ def read_forum_thread(thread_url: str) -> list[dict]:
 
 
 @mcp.tool()
+@_anticipated_errors
 def list_exercise_assignments(ref_id: str) -> list[dict]:
     """List the assignment units of an ILIAS exercise (an item with
     obj_type "exc" from list_container), read-only — no submission/upload
@@ -107,6 +152,7 @@ def list_exercise_assignments(ref_id: str) -> list[dict]:
 
 
 @mcp.tool()
+@_anticipated_errors
 def download_file(ref_id: str) -> str:
     """Download an ILIAS file object by ref_id into the configured download
     directory and return the local file path."""
@@ -117,8 +163,9 @@ def download_file(ref_id: str) -> str:
 def _require_pdf(path: Path, tool_name: str) -> None:
     if path.suffix.lower() != ".pdf":
         raise ValueError(
-            f"{tool_name} only supports PDF files right now (got '{path.name}'). "
-            "Use download_file for this file instead."
+            f"{tool_name} cannot read '{path.name}': supported are PDF"
+            + (", plain-text and ZIP files" if tool_name == "read_file" else " files")
+            + ". Use download_file for this file instead."
         )
 
 
@@ -138,25 +185,86 @@ def _parse_page_spec(spec: str, page_count: int) -> list[int]:
     return pages
 
 
+_TEXT_SUFFIXES = {
+    ".txt",
+    ".md",
+    ".csv",
+    ".json",
+    ".tex",
+    ".py",
+    ".java",
+    ".c",
+    ".h",
+    ".xml",
+    ".yaml",
+    ".yml",
+}
+# Members of a ZIP are read into memory (never extracted to disk, so no
+# path-traversal risk); skip anything unreasonably large.
+_MAX_ZIP_MEMBER_BYTES = 50 * 1024 * 1024
+
+
+def _pdf_text(doc: pymupdf.Document) -> str:
+    return "\n\n".join(
+        f"--- page {i + 1}/{doc.page_count} ---\n{page.get_text()}" for i, page in enumerate(doc)
+    )
+
+
+def _zip_text(path: Path) -> str:
+    parts: list[str] = []
+    with zipfile.ZipFile(path) as zf:
+        members = [
+            m for m in zf.infolist() if not m.is_dir() and not m.filename.startswith("__MACOSX/")
+        ]
+        parts.append(
+            f"ZIP archive '{path.name}' with {len(members)} files: "
+            + ", ".join(m.filename for m in members)
+        )
+        for member in members:
+            suffix = Path(member.filename).suffix.lower()
+            header = f"===== {member.filename}"
+            if member.file_size > _MAX_ZIP_MEMBER_BYTES:
+                parts.append(f"{header} (skipped: {member.file_size} bytes)")
+            elif suffix == ".pdf":
+                with pymupdf.open(stream=zf.read(member), filetype="pdf") as doc:
+                    parts.append(f"{header} ({doc.page_count} pages)\n{_pdf_text(doc)}")
+            elif suffix in _TEXT_SUFFIXES:
+                parts.append(f"{header}\n{zf.read(member).decode('utf-8', errors='replace')}")
+            else:
+                parts.append(
+                    f"{header} (not read: '{suffix or 'no extension'}' is not a text or PDF format; use download_file)"
+                )
+    return "\n\n".join(parts)
+
+
 @mcp.tool()
+@_anticipated_errors
 def read_file(ref_id: str) -> str:
-    """Download an ILIAS file object by ref_id and return its text content,
-    page by page. Only PDF files are supported; use download_file for other
-    formats. This extracts the embedded text layer only — diagrams,
-    images, handwriting, and scanned (non-text) pages are not captured, so
-    fall back to read_file_images for those. Prefer this tool first: it is
-    far cheaper than read_file_images and usually sufficient for
+    """Download an ILIAS file object by ref_id and return its text content.
+    PDFs come back page by page; plain-text files (.txt, .md, .csv, code, ...)
+    as-is; ZIP archives as a member list followed by the text of every PDF
+    and text file inside. Other formats (e.g. .docx, .xlsx, images) are not
+    read; use download_file for those. Only the embedded PDF text layer is
+    extracted: diagrams, images, handwriting, and scanned pages are not
+    captured, so fall back to read_file_images for those. Prefer this tool
+    first: it is far cheaper than read_file_images and usually sufficient for
     text-heavy material like lecture slides. The file is downloaded to a
     temporary location and deleted again immediately after its content is
     read, leaving nothing on disk."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         path = _get_client().download_file(ref_id, Path(tmp_dir))
+        suffix = path.suffix.lower()
+        if suffix == ".zip" or (
+            suffix != ".pdf"
+            and zipfile.is_zipfile(path)
+            and suffix not in {".docx", ".xlsx", ".pptx"}
+        ):
+            return _zip_text(path)
+        if suffix in _TEXT_SUFFIXES:
+            return path.read_text(encoding="utf-8", errors="replace")
         _require_pdf(path, "read_file")
         with pymupdf.open(str(path)) as doc:
-            return "\n\n".join(
-                f"--- page {i + 1}/{doc.page_count} ---\n{page.get_text()}"
-                for i, page in enumerate(doc)
-            )
+            return _pdf_text(doc)
 
 
 # Claude Desktop/claude.ai reject a turn with more than 20 image blocks
@@ -168,6 +276,7 @@ _MAX_IMAGE_PAGES = 20
 
 
 @mcp.tool(structured_output=False)
+@_anticipated_errors
 def read_file_images(ref_id: str, pages: str | None = None) -> list[Image]:
     """Download an ILIAS PDF by ref_id and return specific pages as images,
     the same way a PDF looks when attached to the chat manually — diagrams,
@@ -188,7 +297,9 @@ def read_file_images(ref_id: str, pages: str | None = None) -> list[Image]:
         path = _get_client().download_file(ref_id, Path(tmp_dir))
         _require_pdf(path, "read_file_images")
         with pymupdf.open(str(path)) as doc:
-            page_indices = _parse_page_spec(pages, doc.page_count) if pages else range(doc.page_count)
+            page_indices = (
+                _parse_page_spec(pages, doc.page_count) if pages else range(doc.page_count)
+            )
             if len(page_indices) > _MAX_IMAGE_PAGES:
                 raise ValueError(
                     f"{len(page_indices)} pages requested, but read_file_images is capped at "
